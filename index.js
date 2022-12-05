@@ -2,6 +2,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const compression = require('compression')
 const bodyParser = require('body-parser')
+const cookieParser = require('cookie-parser')
 require("dotenv").config();
 
 const adminRoute = require('./routes/admin.route')
@@ -12,6 +13,7 @@ const userRoute = require('./routes/user.route')
 const app = express();
 
 app.use(bodyParser.json({limit: 20000000}));
+app.use(cookieParser())
 
 
 app.use(function (req, res, next) {
@@ -54,7 +56,7 @@ app.get('/', (req, res) => {
 app.use('/api/admin', adminRoute)
 app.use('/api/app', appRoute)
 app.use('/api/report', reportRoute)
-app.use('/api/user', userRoute)
+app.use('/api/users', userRoute)
 
 const port = process.env.PORT || 7000;
 
