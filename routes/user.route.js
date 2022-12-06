@@ -1,8 +1,9 @@
 const router = require('express').Router();
 const userModel = require('../models/user.model');
-const {genConfCode} = require('../helpers/userAuth.helper')
+const {genConfCode, verifyUserTokenMiddleware, verifyAdminTokenMiddleware} = require('../helpers/auth.helper')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const {sendAccountVerificationEmail} = require('../helpers/aws-ses.helper')
 
 // register user
 router.post('/register', async (req, res) => {
@@ -25,9 +26,17 @@ router.post('/register', async (req, res) => {
         newUser.password = hash
         newUser.save()
         .then(savedUser => {
-            return res.status(201).json({
-                message: 'User registration successful. Kindly verify your provided email address.'
-            })
+
+            emailSuccess = sendAccountVerificationEmail(savedUser)
+            if(emailSuccess){
+                return res.status(201).json({
+                    message: 'User registration successful. Kindly verify your provided email address.'
+                })
+            } else {
+                return res.status(500).json({
+                    message: 'User registration successful. Contact Team AdvertSplash for account activation.'
+                })
+            }
         })
         .catch(saveErr => {
             if(saveErr.code == 11000 && saveErr.keyPattern.email == 1){
@@ -86,7 +95,7 @@ router.post('/login', async (req, res) => {
                     })
                 }
 
-                return res.status(200).cookie('auth_token', token, {httpOnly: true, secure: process.env.NODE_ENV == 'production'}).json({
+                return res.status(200).cookie('auth_token_usr', token, {httpOnly: true, secure: process.env.NODE_ENV == 'production'}).json({
                     message: "Login successful!"
                 })
             })
@@ -102,12 +111,33 @@ router.post('/login', async (req, res) => {
 
 // logout user
 router.get('/logout', async (req, res) => {
-    return res.status(200).clearCookie('auth_token').json({
+    return res.status(200).clearCookie('auth_token_usr').json({
         message: 'Logout successful!'
     })
 })
 
 // get all users
+router.post('/getAll', verifyAdminTokenMiddleware, async (req, res) => {
+    userModel.find()
+    .sort({fullname: 1}).limit(20).skip(Number(req.body.paginate-1)*20)
+    .then(users => {
+        if(users.length <= 0){
+            return res.status(200).json({
+                message: 'No users found.'
+            })
+        }
+
+        return res.status(200).json({
+            message:'Users found.',
+            data: users
+        })
+    })
+    .catch(err => {
+        return res.status(500).json({
+            message: 'An unexpected error occured. Please try again later.'
+        })
+    })
+})
 
 // verify email
 
