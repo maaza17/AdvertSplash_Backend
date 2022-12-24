@@ -87,4 +87,10 @@ router.get('/logout', async (req, res) => {
     })
 })
 
+// request reset password
+
+// request forgot password
+
+// reset password
+
 module.exports = router;

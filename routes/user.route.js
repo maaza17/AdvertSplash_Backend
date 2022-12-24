@@ -139,14 +139,76 @@ router.post('/getAll', verifyAdminTokenMiddleware, async (req, res) => {
     })
 })
 
+// suspend user - limited to admin
+router.post('/suspendUser', verifyAdminTokenMiddleware, async (req, res) => {
+    let userEmail = req.body.email
+    userModel.updateOne({email: userEmail, userStatus: 'Active'}, {$set: {userStatus: 'Suspended'}})
+    .then(suspendedUser => {
+        if(suspendedUser.nModified <= 0){
+            return res.status(400).json({
+                message: 'User not found.'
+            })
+        }
+
+        return res.status(200).json({
+            message: 'User suspended successfully.'
+        })
+    })
+    .catch(err => {
+        return res.status(500).json({
+            message: 'An unexpected error occured. Please try again later.'
+        })
+    })
+})
+
 // verify email
+
+// request reset password
+
+// request forgot password
 
 // reset password
 
-// forgot password
+// delete user - limited to admin - hard delete - delete all associated entities (apps, reports)
+router.post('/deleteUser_admin', verifyAdminTokenMiddleware, async (req, res) => {
+    let userEmail = req.body.email
+    userModel.deleteOne({email: userEmail})
+    .then(deletedUser => {
+        
+        // delete all associated entities here
 
-// delete user - limited to admin - hard delete
+        if(deletedUser.deletedCount <= 0){
+            return res.status(400).json({
+                message: 'User not found.'
+            })
+        }
+
+        return res.status(200).json({
+            message: 'User deleted'
+        })
+    })
+})
 
 // restore user - limited to admin
+router.post('/restoreUser', verifyAdminTokenMiddleware, async (req, res) => {
+    let userEmail = req.body.email
+    userModel.updateOne({email: userEmail, userStatus: 'Suspended'}, {$set: {userStatus: 'Active'}})
+    .then(restoredUser => {
+        if(restoredUser.nModified <= 0){
+            return res.status(400).json({
+                message: 'User not found.'
+            })
+        }
+
+        return res.status(200).json({
+            message: 'User restored successfully.'
+        })
+    })
+    .catch(err => {
+        return res.status(500).json({
+            message: 'An unexpected error occured. Please try again later.'
+        })
+    })
+})
 
 module.exports = router;
