@@ -214,7 +214,7 @@ router.post('/restoreUser', verifyAdminTokenMiddleware, async (req, res) => {
 // check user session
 router.get('/checkUserSession', verifyUserTokenMiddleware, async (req, res) => {
     return res.status(200).json({
-        message: 'User session is valid.'
+        message: 'Session is valid.'
     })
 })
 

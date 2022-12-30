@@ -93,4 +93,11 @@ router.get('/logout', async (req, res) => {
 
 // reset password
 
+// check admin session
+router.get('/checkAdminSession', verifyAdminTokenMiddleware, async (req, res) => {
+    return res.status(200).json({
+        message: 'Session is valid.'
+    })
+})
+
 module.exports = router;
