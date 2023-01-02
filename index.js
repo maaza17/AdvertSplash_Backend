@@ -2,6 +2,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const compression = require('compression')
 const bodyParser = require('body-parser')
+const cors = require('cors')
 const cookieParser = require('cookie-parser')
 require("dotenv").config();
 
@@ -28,6 +29,8 @@ app.use(function (req, res, next) {
   );
   next();
 });
+
+app.use(cors({origin: process.env.FRONTEND_ORIGIN, credentials: true}))
 
 app.use(compression({
   level: 6,
