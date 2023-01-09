@@ -141,7 +141,6 @@ router.post('/getAll', verifyAdminTokenMiddleware, async (req, res) => {
 
 // suspend user - limited to admin
 router.post('/suspendUser', verifyAdminTokenMiddleware, async (req, res) => {
-    console.log(req.body)
     let userEmail = req.body.email
     await userModel.updateOne({email: userEmail, userStatus: 'Active'}, {userStatus: 'Suspended'})
     .then(suspendedUser => {
@@ -200,9 +199,10 @@ router.post('/deleteUser_admin', verifyAdminTokenMiddleware, async (req, res) =>
 // restore user - limited to admin
 router.post('/restoreUser', verifyAdminTokenMiddleware, async (req, res) => {
     let userEmail = req.body.email
+    // console.log(req.body);
     userModel.updateOne({email: userEmail, userStatus: 'Suspended'}, {$set: {userStatus: 'Active'}})
     .then(restoredUser => {
-        if(restoredUser.nModified <= 0){
+        if(restoredUser.matchedCount <= 0){
             return res.status(400).json({
                 message: 'User not found.'
             })
