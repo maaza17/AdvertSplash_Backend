@@ -141,18 +141,24 @@ router.post('/getAll', verifyAdminTokenMiddleware, async (req, res) => {
 
 // suspend user - limited to admin
 router.post('/suspendUser', verifyAdminTokenMiddleware, async (req, res) => {
+    console.log(req.body)
     let userEmail = req.body.email
-    userModel.updateOne({email: userEmail, userStatus: 'Active'}, {$set: {userStatus: 'Suspended'}})
+    await userModel.updateOne({email: userEmail, userStatus: 'Active'}, {userStatus: 'Suspended'})
     .then(suspendedUser => {
-        if(suspendedUser.nModified <= 0){
+        // console.log(suspendedUser)
+        if(suspendedUser.matchedCount <= 0){
             return res.status(400).json({
                 message: 'User not found.'
             })
+        } else if(suspendedUser.modifiedCount <= 0){
+            return res.status(400).json({
+                message: 'User already suspended.'
+            })
+        } else {
+            return res.status(200).json({
+                message: 'User suspended successfully.'
+            })
         }
-
-        return res.status(200).json({
-            message: 'User suspended successfully.'
-        })
     })
     .catch(err => {
         return res.status(500).json({
@@ -172,8 +178,10 @@ router.post('/suspendUser', verifyAdminTokenMiddleware, async (req, res) => {
 // delete user - limited to admin - hard delete - delete all associated entities (apps, reports)
 router.post('/deleteUser_admin', verifyAdminTokenMiddleware, async (req, res) => {
     let userEmail = req.body.email
-    userModel.deleteOne({email: userEmail})
+    await userModel.deleteOne({email: userEmail})
     .then(deletedUser => {
+
+        // console.log(deletedUser)
         
         // delete all associated entities here
 
