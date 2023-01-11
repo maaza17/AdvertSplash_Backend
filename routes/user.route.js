@@ -84,8 +84,7 @@ router.post('/login', async (req, res) => {
                 _id: user._id,
                 fullname: user.fullname,
                 email: user.email,
-                userStatus: user.userStatus,
-                confCode: user.confCode
+                userStatus: user.userStatus
             }
 
             jwt.sign(payload, process.env.ENCRYPTION_SECRET_USER, {expiresIn: 172800}, (signErr, token) => {
@@ -167,12 +166,129 @@ router.post('/suspendUser', verifyAdminTokenMiddleware, async (req, res) => {
 })
 
 // verify email
-
-// request reset password
+router.get('/verifyEmail:confCode', async (req, res) => {
+    let confCode = req.params.confCode
+    await userModel.updateOne({confCode: confCode, userStatus: 'Registered'}, {userStatus: 'Active', confCode: genConfCode()})
+    .then(updated => {
+        if(updated.matchedCount <= 0){
+            return res.status(404).json({
+                message: 'Invalid verification link.'
+            })
+        } else {
+            return res.status(200).json({
+                message: 'Email verified successfully.'
+            })
+        }
+    })
+    .catch(err => {
+        return res.status(500).json({
+            message: 'An unexpected error occured. Please try again later.'
+        })
+    })
+})
 
 // request forgot password
+router.post('/requestForgotPassword', async(req, res) => {
+    let newConfCode = getConfCode()
+    userModel.updateOne({email: req.body.email}, {confCode: newConfCode})
+    .then(updated => {
+        if(updated.matchedCount <= 0 || updated.modifiedCount <= 0){
+            return res.status(400).json({
+                message: 'User requesting password reset not found.'
+            })
+        } else {
+            jwt.sign({confCode: newConfCode}, process.env.ENCRYPTION_SECRET_USER, {expiresIn: 600}, (signErr, tempToken) => {
+                if(signErr){
+                    return res.status(500).json({
+                        message: 'An unexpected occurred. Please try again later!'
+                    })
+                } else {
+                    return res.status(200).json({
+                        message: 'Configure email alert here to send link with tempToken as url parameter.',
+                        tempToken: tempToken
+                    })
+                }
+            })
+        }
+    })
+    .catch(err => {
+        return res.status(500).json({
+            message: 'An unexpected occurred. Please try again later!'
+        })
+    })
+})
 
-// reset password
+// reset forgotten password
+router.post('/resetForgottenPassword/:tempToken', async (req, res) => {
+    try {
+        let tempDecoded = jwt.verify(req.params.tempToken, process.env.ENCRYPTION_SECRET_USER)
+
+        bcrypt.hash(req.body.newPassword, 10)
+        .then(newHash => {
+            userModel.updateOne({confCode: tempDecoded.confCode}, {confCode: getConfCode(), password: newHash})
+            .then(updated => {
+                if(updated.matchedCount <= 0 || updated.modifiedCount <= 0){
+                    return res.status(500).json({
+                        message: 'An unexpected error occurred. Please try again later.'
+                    })
+                } else {
+                    return res.status(200).json({
+                        message: 'Password reset successfully.'
+                    })
+                }
+            })
+        })        
+    } catch (err) {
+        return res.status(500).json({
+            message: 'An unexpected error occurred. Please try again later.'
+        })
+    }
+})
+
+// reset password self
+router.post('/resetPassword', verifyUserTokenMiddleware, async (req, res) => {
+    let {oldPass, newPassOne, newPassTwo} = req.body
+    userModel.findOne({email: req.body.decodedUser.email})
+    .then(user => {
+        bcrypt.compare(oldPass, user.password)
+        .then(isMatch => {
+            if(!isMatch){
+                return res.status(403).clearCookie('auth_token_usr').json({
+                    message: 'Old password is incorrect. You will be logged out for security purposes. Kindly reset your password from the \'Forgot Password?\' option.'
+                })
+            }
+        })
+        .then(() => {
+            if(newPassOne === newPassTwo){
+                bcrypt.hash(newPassOne, 10)
+                .then(newHash => {
+                    userModel.updateOne({email: req.body.decodedUser.email}, {password: newHash, confCode: getConfCode()})
+                    .then(updated => {
+                        if(updated.matchedCount <= 0 || updated.modifiedCount <= 0){
+                            return res.status(500).json({
+                                message: 'An unexpected error occured. Please try again later.'
+                            })
+                        } else {
+                            return res.status(200).clearCookie('auth_token_usr').json({
+                                message: 'Password reset successfully. Please sign-in again with your updated credentials.'
+                            })
+                        }
+                    })
+                })
+            } else {
+                return res.status(400).json({
+                    message: 'New passwords do not match.'
+                })
+            }
+        })
+    })
+    .catch(err => {
+        return res.status(500).json({
+            message: 'An unexpected error occured. Please try again later.'
+        })
+    })
+})
+
 
 // delete user - limited to admin - hard delete - delete all associated entities (apps, reports)
 router.post('/deleteUser_admin', verifyAdminTokenMiddleware, async (req, res) => {
