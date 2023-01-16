@@ -189,7 +189,7 @@ router.get('/verifyEmail:confCode', async (req, res) => {
 
 // request forgot password
 router.post('/requestForgotPassword', async(req, res) => {
-    let newConfCode = getConfCode()
+    let newConfCode = genConfCode()
     userModel.updateOne({email: req.body.email}, {confCode: newConfCode})
     .then(updated => {
         if(updated.matchedCount <= 0 || updated.modifiedCount <= 0){
@@ -225,7 +225,7 @@ router.post('/resetForgottenPassword/:tempToken', async (req, res) => {
 
         bcrypt.hash(req.body.newPassword, 10)
         .then(newHash => {
-            userModel.updateOne({confCode: tempDecoded.confCode}, {confCode: getConfCode(), password: newHash})
+            userModel.updateOne({confCode: tempDecoded.confCode}, {confCode: genConfCode(), password: newHash})
             .then(updated => {
                 if(updated.matchedCount <= 0 || updated.modifiedCount <= 0){
                     return res.status(500).json({
@@ -262,7 +262,7 @@ router.post('/resetPassword', verifyUserTokenMiddleware, async (req, res) => {
             if(newPassOne === newPassTwo){
                 bcrypt.hash(newPassOne, 10)
                 .then(newHash => {
-                    userModel.updateOne({email: req.body.decodedUser.email}, {password: newHash, confCode: getConfCode()})
+                    userModel.updateOne({email: req.body.decodedUser.email}, {password: newHash, confCode: genConfCode()})
                     .then(updated => {
                         if(updated.matchedCount <= 0 || updated.modifiedCount <= 0){
                             return res.status(500).json({
