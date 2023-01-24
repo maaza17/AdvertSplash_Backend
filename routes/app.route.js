@@ -3,7 +3,6 @@ const {verifyAdminTokenMiddleware, verifyUserTokenMiddleware} = require('../help
 const { emit } = require('../models/admin.model')
 const appModel = require('../models/app.model')
 const reportModel = require('../models/report.model')
-const reportModel = require('../models/report.model')
 
 // define routes here
 
