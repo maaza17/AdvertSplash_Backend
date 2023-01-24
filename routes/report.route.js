@@ -30,7 +30,7 @@ router.get('/filteredReportsAdmin', verifyAdminTokenMiddleware, async (req, res)
         console.log('aggregated call')
         reportModel.aggregate([
             {$match: filterCriteria},
-            {$group: {_id: "$appName", exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
+            {$group: {_id: "$appName", adCount: {$countUnique: '$dfpAdUnit'}, exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
                     coverage: {$avg: "$coverage"}, clicks: {$sum: "$clicks"}, adRequestCTR: {$avg: "$adRequestCTR"}, ctr: {$avg: "$ctr"},
                     adCTR: {$avg: "$adCTR"},cpc: {$sum: "$cpc"}, adRequesteCPM: {$sum: "$adRequesteCPM"}, matchedeCPM: {$sum: "$matchedeCPM"},
                     lift: {$avg: "$lift"}, estRevenue: {$sum: "$estRevenue"}, adImpressions: {$sum: "$adImpressions"}, adeCPM: {$sum: "$adeCPM"}
@@ -93,7 +93,7 @@ router.get('/filteredReportsUser', verifyUserTokenMiddleware, async (req, res) =
         console.log('aggregated call')
         reportModel.aggregate([
             {$match: filterCriteria},
-            {$group: {_id: "$appName", exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
+            {$group: {_id: "$appName", adCount: {$countUnique: '$dfpAdUnit'}, exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
                     coverage: {$avg: "$coverage"}, clicks: {$sum: "$clicks"}, adRequestCTR: {$avg: "$adRequestCTR"}, ctr: {$avg: "$ctr"},
                     adCTR: {$avg: "$adCTR"},cpc: {$sum: "$cpc"}, adRequesteCPM: {$sum: "$adRequesteCPM"}, matchedeCPM: {$sum: "$matchedeCPM"},
                     lift: {$avg: "$lift"}, estRevenue: {$sum: "$estRevenue"}, adImpressions: {$sum: "$adImpressions"}, adeCPM: {$sum: "$adeCPM"}

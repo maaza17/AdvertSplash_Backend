@@ -1,7 +1,8 @@
-const router = require('express').Router();
-const {verifyAdminTokenMiddleware, verifyUserTokenMiddleware} = require('../helpers/auth.helper');
-const { emit } = require('../models/admin.model');
-const appModel = require('../models/app.model');
+const router = require('express').Router()
+const {verifyAdminTokenMiddleware, verifyUserTokenMiddleware} = require('../helpers/auth.helper')
+const { emit } = require('../models/admin.model')
+const appModel = require('../models/app.model')
+const reportModel = require('../models/report.model')
 const reportModel = require('../models/report.model')
 
 // define routes here
@@ -34,20 +35,19 @@ router.post('/addApplication', verifyAdminTokenMiddleware, (req, res) => {
 })
 
 router.get('/getAllApps', verifyAdminTokenMiddleware, (req, res) => {
-    appModel.find()
-    .then(result => {
+    // remember to agregate and sum the count of ad unit IDs here and return in the response
 
-        // remember to agregate and sum the count of ad unit IDs here and return in the response
-
+    reportModel.aggregate([
+        {$group: {_id: '$appName', adCount: {$countUnique: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}}
+    ])
+    .then(reports => {
         res.status(200).json({
-            message: 'Apps retrieved successfully.',
-            data: result
+            data: reports
         })
     })
     .catch(err => {
         res.status(500).json({
-            message: 'Error retrieving apps.',
-            error: err
+            message: 'An unexpected error occurred. Please try again later.'
         })
     })
 })
@@ -58,11 +58,23 @@ router.post('/getAppsByUser_admin', verifyAdminTokenMiddleware, (req, res) => {
     .then(result => {
 
         // remember to agregate and sum the count of ad unit IDs here and return in the response
+        let userApps = result.map(function(app){return app.appName})
 
-        res.status(200).json({
-            message: 'Apps retrieved successfully.',
-            data: result
+        reportModel.aggregate([
+            {$match: {appName: {$in: userApps}}},
+            {$group: {_id: '$appName', adCount: {$countUnique: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}}
+        ])
+        .then(reports => {
+            res.status(200).json({
+                data: reports
+            })
         })
+        .catch(err => {
+            res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.'
+            })
+        })
+
     })
     .catch(err => {
         res.status(500).json({
@@ -78,11 +90,23 @@ router.post('/getAppsByUser_user', verifyUserTokenMiddleware, (req, res) => {
     .then(result => {
 
         // remember to agregate and sum the count of ad unit IDs here and return in the response
+        let userApps = result.map(function(app){return app.appName})
 
-        res.status(200).json({
-            message: 'Apps retrieved successfully.',
-            data: result
+        reportModel.aggregate([
+            {$match: {appName: {$in: userApps}}},
+            {$group: {_id: '$appName', adCount: {$countUnique: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}}
+        ])
+        .then(reports => {
+            res.status(200).json({
+                data: reports
+            })
         })
+        .catch(err => {
+            res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.'
+            })
+        })
+
     })
     .catch(err => {
         res.status(500).json({
@@ -94,6 +118,21 @@ router.post('/getAppsByUser_user', verifyUserTokenMiddleware, (req, res) => {
 // GET unique mobile apps count
 router.get('/getUniqueMobileAppsCount', verifyAdminTokenMiddleware, (req, res) => {
     appModel.countDocuments({appType: 'Mobile'})
+    .then(count => {
+        res.status(200).json({
+            count: count
+        })
+    })
+    .catch(err => {
+        res.status(500).json({
+            message: 'An unexpected error occurred. Please try again later.'
+        })
+    })
+})
+
+// GET unique web apps count
+router.get('/getUniqueMobileAppsCount', verifyAdminTokenMiddleware, (req, res) => {
+    appModel.countDocuments({appType: 'Web'})
     .then(count => {
         res.status(200).json({
             count: count
