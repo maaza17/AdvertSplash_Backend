@@ -342,4 +342,18 @@ router.get('/checkUserSession', verifyUserTokenMiddleware, async (req, res) => {
     })
 })
 
+// GET unique user count
+router.get('/getUniqueUserCount', verifyAdminTokenMiddleware, async (req, res) => {
+    userModel.countDocuments({userStatus: 'Active'})
+    .then(count => {
+        return res.status(200).json({
+            count: count
+        })
+    })
+    .catch(err => {
+        return res.status(500).json({
+            message: 'An unexpected error occured. Please try again later.'
+        })
+    })
+})
 module.exports = router;

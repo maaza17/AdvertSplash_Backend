@@ -86,8 +86,22 @@ router.post('/getAppsByUser_user', verifyUserTokenMiddleware, (req, res) => {
     })
     .catch(err => {
         res.status(500).json({
-            message: 'Could not get apps for user.',
-            error: err
+            message: 'An unexpected error occurred. Please try again later.'
+        })
+    })
+})
+
+// GET unique mobile apps count
+router.get('/getUniqueMobileAppsCount', verifyAdminTokenMiddleware, (req, res) => {
+    appModel.countDocuments({appType: 'Mobile'})
+    .then(count => {
+        res.status(200).json({
+            count: count
+        })
+    })
+    .catch(err => {
+        res.status(500).json({
+            message: 'An unexpected error occurred. Please try again later.'
         })
     })
 })
