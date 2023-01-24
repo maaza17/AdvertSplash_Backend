@@ -3,13 +3,32 @@ const mongoose = require('mongoose')
 // define report schema
 const reportSchema = new mongoose.Schema({
     date: {
-        type: Date
+        type: Date,
+        required: true
+    },
+    appName: {
+        type: String
     },
     comID: {
         type: String,
         required: true
     },
-    imressions: {
+    dfpAdUnit: {
+        type: String,
+        required: true
+    },
+    adType: {
+        type: String
+    },
+    exchangeRequests: {
+        type: Number,
+        required: true
+    },
+    matchedRequests: {
+        type: Number,
+        required: true
+    },
+    coverage: {
         type: Number,
         required: true
     },
@@ -17,7 +36,7 @@ const reportSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    adRequests: {
+    adRequestCTR: {
         type: Number,
         required: true
     },
@@ -25,18 +44,43 @@ const reportSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    cpm: {
+    adCTR: {
         type: Number,
         required: true
     },
-    revenue: {
+    cpc: {
         type: Number,
         required: true
     },
-    uploadDate: {
-        type: Date,
-        default: Date.now()
+    adRequesteCPM: {
+        type: Number,
+        required: true
+    },
+    matchedeCPM: {
+        type: Number,
+        required: true
+    },
+    lift: {
+        type: Number,
+        required: true
+    },
+    estRevenue: {
+        type: Number,
+        required: true
+    },
+    adImpressions: {
+        type: Number,
+        required: true
+    },
+    adeCPM: {
+        type: Number,
+        required: true
+    },
+    country: {
+        type: String,
+        required: true
     }
 })
+
 const reportModel = mongoose.model('report', reportSchema)
 module.exports = reportModel
