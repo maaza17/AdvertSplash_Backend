@@ -130,7 +130,7 @@ router.get('/getUniqueMobileAppsCount', verifyAdminTokenMiddleware, (req, res) =
 })
 
 // GET unique web apps count
-router.get('/getUniqueMobileAppsCount', verifyAdminTokenMiddleware, (req, res) => {
+router.get('/getUniqueWebAppsCount', verifyAdminTokenMiddleware, (req, res) => {
     appModel.countDocuments({appType: 'Web'})
     .then(count => {
         res.status(200).json({
