@@ -61,7 +61,9 @@ router.post('/getAppsByUser_admin', verifyAdminTokenMiddleware, (req, res) => {
 
         reportModel.aggregate([
             {$match: {appName: {$in: userApps}}},
-            {$group: {_id: '$appName', adCount: {$countUnique: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}}
+            {$group: {_id: '$appName', adCount: {$addToSet: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}},
+            {$unwind: '$adCount'},
+            {$group: {_id: '$appName', adCount: {$sum: '$adCount'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}},
         ])
         .then(reports => {
             res.status(200).json({
@@ -70,7 +72,8 @@ router.post('/getAppsByUser_admin', verifyAdminTokenMiddleware, (req, res) => {
         })
         .catch(err => {
             res.status(500).json({
-                message: 'An unexpected error occurred. Please try again later.'
+                message: 'An unexpected error occurred. Please try again later.',
+                error: err.message
             })
         })
 
@@ -93,7 +96,9 @@ router.post('/getAppsByUser_user', verifyUserTokenMiddleware, (req, res) => {
 
         reportModel.aggregate([
             {$match: {appName: {$in: userApps}}},
-            {$group: {_id: '$appName', adCount: {$countUnique: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}}
+            {$group: {_id: '$appName', adCount: {$addToSet: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}},
+            {$unwind: '$adCount'},
+            {$group: {_id: '$appName', adCount: {$sum: '$adCount'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}},
         ])
         .then(reports => {
             res.status(200).json({
@@ -102,7 +107,8 @@ router.post('/getAppsByUser_user', verifyUserTokenMiddleware, (req, res) => {
         })
         .catch(err => {
             res.status(500).json({
-                message: 'An unexpected error occurred. Please try again later.'
+                message: 'An unexpected error occurred. Please try again later.',
+                error: err.message
             })
         })
 
