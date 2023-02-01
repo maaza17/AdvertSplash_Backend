@@ -9,7 +9,7 @@ const isEmpty = require('is-empty');
 // GET filtered and/or aggregated view - admin
 router.get('/filteredReportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
     let {filterApp, filterStartDate, filterAdTypes, filterEndDate, filterCountry, aggregateByApp} = req.query
-
+    console.log(req.query);
     // set filterCriteria object
     let filterCriteria = {}
     filterCirteria = !isEmpty(filterCountry)?filterCriteria.country = { $in: filterCountry.split(',') }:filterCriteria
@@ -26,16 +26,23 @@ router.get('/filteredReportsAdmin', verifyAdminTokenMiddleware, async (req, res)
         filterCriteria.date = { $gte: Date.parse(filterStartDate)}
     }
 
-    if(aggregateByApp){
+    if(aggregateByApp==="true"){
         console.log('aggregated call')
         reportModel.aggregate([
             {$match: filterCriteria},
-            {$group: {_id: "$appName", adCount: {$countUnique: '$dfpAdUnit'}, exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
+            {$group: {_id: "$appName", adCount: {$addToSet: '$dfpAdUnit'}, exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
                     coverage: {$avg: "$coverage"}, clicks: {$sum: "$clicks"}, adRequestCTR: {$avg: "$adRequestCTR"}, ctr: {$avg: "$ctr"},
                     adCTR: {$avg: "$adCTR"},cpc: {$sum: "$cpc"}, adRequesteCPM: {$sum: "$adRequesteCPM"}, matchedeCPM: {$sum: "$matchedeCPM"},
                     lift: {$avg: "$lift"}, estRevenue: {$sum: "$estRevenue"}, adImpressions: {$sum: "$adImpressions"}, adeCPM: {$sum: "$adeCPM"}
                 }
-            }
+            },
+            {$unwind: '$adCount'},
+            {$group: {_id: "$appName", adCount: {$sum: '$dfpAdUnit'}, exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
+            coverage: {$avg: "$coverage"}, clicks: {$sum: "$clicks"}, adRequestCTR: {$avg: "$adRequestCTR"}, ctr: {$avg: "$ctr"},
+            adCTR: {$avg: "$adCTR"},cpc: {$sum: "$cpc"}, adRequesteCPM: {$sum: "$adRequesteCPM"}, matchedeCPM: {$sum: "$matchedeCPM"},
+            lift: {$avg: "$lift"}, estRevenue: {$sum: "$estRevenue"}, adImpressions: {$sum: "$adImpressions"}, adeCPM: {$sum: "$adeCPM"}
+        }
+    },
         ])
         .then(reports => {
             return res.status(200).json({
@@ -93,12 +100,19 @@ router.get('/filteredReportsUser', verifyUserTokenMiddleware, async (req, res) =
         console.log('aggregated call')
         reportModel.aggregate([
             {$match: filterCriteria},
-            {$group: {_id: "$appName", adCount: {$countUnique: '$dfpAdUnit'}, exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
+            {$group: {_id: "$appName", adCount: {$addToSet: '$dfpAdUnit'}, exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
                     coverage: {$avg: "$coverage"}, clicks: {$sum: "$clicks"}, adRequestCTR: {$avg: "$adRequestCTR"}, ctr: {$avg: "$ctr"},
                     adCTR: {$avg: "$adCTR"},cpc: {$sum: "$cpc"}, adRequesteCPM: {$sum: "$adRequesteCPM"}, matchedeCPM: {$sum: "$matchedeCPM"},
                     lift: {$avg: "$lift"}, estRevenue: {$sum: "$estRevenue"}, adImpressions: {$sum: "$adImpressions"}, adeCPM: {$sum: "$adeCPM"}
                 }
-            }
+            },
+            {$unwind: '$adCount'},
+            {$group: {_id: "$appName", adCount: {$sum: '$adCount'}, exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
+                    coverage: {$avg: "$coverage"}, clicks: {$sum: "$clicks"}, adRequestCTR: {$avg: "$adRequestCTR"}, ctr: {$avg: "$ctr"},
+                    adCTR: {$avg: "$adCTR"},cpc: {$sum: "$cpc"}, adRequesteCPM: {$sum: "$adRequesteCPM"}, matchedeCPM: {$sum: "$matchedeCPM"},
+                    lift: {$avg: "$lift"}, estRevenue: {$sum: "$estRevenue"}, adImpressions: {$sum: "$adImpressions"}, adeCPM: {$sum: "$adeCPM"}
+                }
+            },
         ])
         .then(reports => {
             return res.status(200).json({
