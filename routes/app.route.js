@@ -36,8 +36,11 @@ router.post('/addApplication', verifyAdminTokenMiddleware, (req, res) => {
 router.get('/getAllApps', verifyAdminTokenMiddleware, (req, res) => {
     // remember to agregate and sum the count of ad unit IDs here and return in the response
 
+    // reportModel.aggregate([
+    //     {$group: {_id: '$appName', adCount: {$countUnique: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}}
+    // ])
     reportModel.aggregate([
-        {$group: {_id: '$appName', adCount: {$countUnique: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}}
+        {$group: {_id: '$appName',  totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}}
     ])
     .then(reports => {
         res.status(200).json({
@@ -46,7 +49,8 @@ router.get('/getAllApps', verifyAdminTokenMiddleware, (req, res) => {
     })
     .catch(err => {
         res.status(500).json({
-            message: 'An unexpected error occurred. Please try again later.'
+            message:err.message,
+            error:err
         })
     })
 })
