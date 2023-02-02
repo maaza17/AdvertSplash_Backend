@@ -9,7 +9,7 @@ const isEmpty = require('is-empty');
 // GET filtered and/or aggregated view - admin
 router.get('/filteredReportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
     let {filterApp, filterStartDate, filterAdTypes, filterEndDate, filterCountry, aggregateByApp} = req.query
-    console.log(req.query);
+    // console.log(req.query);
     // set filterCriteria object
     let filterCriteria = {}
     filterCirteria = !isEmpty(filterCountry)?filterCriteria.country = { $in: filterCountry.split(',') }:filterCriteria
@@ -145,7 +145,31 @@ router.get('/filteredReportsUser', verifyUserTokenMiddleware, async (req, res) =
         })
     }
 })
+router.get('/getReportTypesDropdown',verifyAdminTokenMiddleware, async (req,res) => {
+ const types = await reportModel.aggregate([
+    {$group:{_id:'$adType'}},
+   
+]) 
+ const name = await reportModel.aggregate([
+    {$group:{_id:'$appName'}},
+   
+]) 
+ const country = await reportModel.aggregate([
+    {$group:{_id:'$country'}},
+   
+]) 
 
+    let appTypes = types.map(dataByType => dataByType._id)
+    let appNames = name.map(dataByName => dataByName._id)
+    let appCountries = country.map(dataByCountry => dataByCountry._id)
+    
+    return res.status(200).json({
+        types:appTypes,
+        names:appNames,
+        countries:appCountries
+    })
+
+})
 // POST bulk upload reports
 
 // POST delete reports - filtered
