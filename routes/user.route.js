@@ -95,7 +95,10 @@ router.post('/login', async (req, res) => {
                 }
 
                 return res.status(200).cookie('auth_token_usr', token, {httpOnly: true, secure: process.env.NODE_ENV == 'production'}).json({
-                    message: "Login successful!"
+                    message: "Login successful!",
+                    userName:user.fullname,
+                    userEmail:user.email,
+                    userStatus:user.userStatus
                 })
             })
         })

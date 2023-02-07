@@ -96,7 +96,7 @@ router.get('/filteredReportsUser', verifyUserTokenMiddleware, async (req, res) =
         filterCriteria.date = { $gte: Date.parse(filterStartDate)}
     }
 
-    if(aggregateByApp){
+    if(aggregateByApp==="true"){
         console.log('aggregated call')
         reportModel.aggregate([
             {$match: filterCriteria},
