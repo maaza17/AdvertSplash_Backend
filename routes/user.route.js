@@ -1,17 +1,17 @@
 const router = require('express').Router();
 const userModel = require('../models/user.model');
-const {genConfCode, verifyUserTokenMiddleware, verifyAdminTokenMiddleware} = require('../helpers/auth.helper')
+const { genConfCode, verifyUserTokenMiddleware, verifyAdminTokenMiddleware } = require('../helpers/auth.helper')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const {sendAccountVerificationEmail} = require('../helpers/aws-ses.helper')
+const { sendAccountVerificationEmail } = require('../helpers/aws-ses.helper')
 
 // register user
 router.post('/register', async (req, res) => {
-    let {fullname, email, phoneNum, password} = req.body
-    
+    let { fullname, email, phoneNum, password } = req.body
+
     // validate user inputs here
-    
-    
+
+
     let newUser = new userModel({
         fullname: fullname,
         email: email,
@@ -22,93 +22,93 @@ router.post('/register', async (req, res) => {
 
     // hash user provided password here
     bcrypt.hash(newUser.password, 10)
-    .then(hash => {
-        newUser.password = hash
-        newUser.save()
-        .then(savedUser => {
+        .then(hash => {
+            newUser.password = hash
+            newUser.save()
+                .then(savedUser => {
 
-            emailSuccess = sendAccountVerificationEmail(savedUser)
-            if(emailSuccess){
-                return res.status(201).json({
-                    message: 'User registration successful. Kindly verify your provided email address.'
+                    emailSuccess = sendAccountVerificationEmail(savedUser)
+                    if (emailSuccess) {
+                        return res.status(201).json({
+                            message: 'User registration successful. Kindly verify your provided email address.'
+                        })
+                    } else {
+                        return res.status(500).json({
+                            message: 'User registration successful. Contact Team AdvertSplash for account activation.'
+                        })
+                    }
                 })
-            } else {
-                return res.status(500).json({
-                    message: 'User registration successful. Contact Team AdvertSplash for account activation.'
-                })
-            }
-        })
-        .catch(saveErr => {
-            if(saveErr.code == 11000 && saveErr.keyPattern.email == 1){
-                return res.status(400).json({
-                    message: 'An account with email ' + saveErr.keyValue.email + ' already exists.'
-                })
-            }
+                .catch(saveErr => {
+                    if (saveErr.code == 11000 && saveErr.keyPattern.email == 1) {
+                        return res.status(400).json({
+                            message: 'An account with email ' + saveErr.keyValue.email + ' already exists.'
+                        })
+                    }
 
-            return res.status(500).json({
-                message: 'An unexpected error occured. Please try again later.'
-            })
+                    return res.status(500).json({
+                        message: 'An unexpected error occured. Please try again later.'
+                    })
+                })
         })
-    })
-    .catch(hashErr => {
+        .catch(hashErr => {
             return res.status(500).json({
                 message: 'An unexpected error occured while securing your password. Please try again.'
             })
-    })
+        })
 })
 
 // login user
 router.post('/login', async (req, res) => {
-    let {email, password} = req.body
+    let { email, password } = req.body
 
     // validate user provided inputs here
 
     // check is user exists
-    userModel.findOne({email: email})
-    .then(user => {
-        if(user.userStatus == 'Suspended'){
-            return res.status(403).json({
-                message: 'Your account is suspended. Please contact portal admin for resolution.'
-            })
-        }
-
-        bcrypt.compare(password, user.password)
-        .then(isMatch => {
-            if(!isMatch){
+    userModel.findOne({ email: email })
+        .then(user => {
+            if (user.userStatus == 'Suspended') {
                 return res.status(403).json({
-                    message: 'Incorrect password.'
+                    message: 'Your account is suspended. Please contact portal admin for resolution.'
                 })
             }
 
-            let payload = {
-                _id: user._id,
-                fullname: user.fullname,
-                email: user.email,
-                userStatus: user.userStatus
-            }
+            bcrypt.compare(password, user.password)
+                .then(isMatch => {
+                    if (!isMatch) {
+                        return res.status(403).json({
+                            message: 'Incorrect password.'
+                        })
+                    }
 
-            jwt.sign(payload, process.env.ENCRYPTION_SECRET_USER, {expiresIn: 172800}, (signErr, token) => {
-                if(signErr){
-                    return res.status(500).json({
-                        message: 'An unexpected error occured. Please try again later.'
+                    let payload = {
+                        _id: user._id,
+                        fullname: user.fullname,
+                        email: user.email,
+                        userStatus: user.userStatus
+                    }
+
+                    jwt.sign(payload, process.env.ENCRYPTION_SECRET_USER, { expiresIn: 172800 }, (signErr, token) => {
+                        if (signErr) {
+                            return res.status(500).json({
+                                message: 'An unexpected error occured. Please try again later.'
+                            })
+                        }
+
+                        return res.status(200).cookie('auth_token_usr', token, { httpOnly: true, secure: process.env.NODE_ENV == 'production' }).json({
+                            message: "Login successful!",
+                            userName: user.fullname,
+                            userEmail: user.email,
+                            userStatus: user.userStatus
+                        })
                     })
-                }
-
-                return res.status(200).cookie('auth_token_usr', token, {httpOnly: true, secure: process.env.NODE_ENV == 'production'}).json({
-                    message: "Login successful!",
-                    userName:user.fullname,
-                    userEmail:user.email,
-                    userStatus:user.userStatus
                 })
+        })
+        .catch(err => {
+            return res.status(400).json({
+                message: 'User does not exist.'
             })
         })
-    })
-    .catch(err => {
-        return res.status(400).json({
-            message: 'User does not exist.'
-        })
-    })
-    
+
 })
 
 // logout user
@@ -121,104 +121,104 @@ router.get('/logout', async (req, res) => {
 // get all users
 router.post('/getAll', verifyAdminTokenMiddleware, async (req, res) => {
     userModel.find()
-    .sort({fullname: 1}).limit(20).skip(Number(req.body.paginate-1)*20)
-    .then(users => {
-        if(users.length <= 0){
-            return res.status(200).json({
-                message: 'No users found.'
-            })
-        }
+        .sort({ fullname: 1 }).limit(20).skip(Number(req.body.paginate - 1) * 20)
+        .then(users => {
+            if (users.length <= 0) {
+                return res.status(200).json({
+                    message: 'No users found.'
+                })
+            }
 
-        return res.status(200).json({
-            message:'Users found.',
-            data: users
+            return res.status(200).json({
+                message: 'Users found.',
+                data: users
+            })
         })
-    })
-    .catch(err => {
-        return res.status(500).json({
-            message: 'An unexpected error occured. Please try again later.'
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occured. Please try again later.'
+            })
         })
-    })
 })
 
 // suspend user - limited to admin
 router.post('/suspendUser', verifyAdminTokenMiddleware, async (req, res) => {
     let userEmail = req.body.email
-    await userModel.updateOne({email: userEmail, userStatus: 'Active'}, {userStatus: 'Suspended'})
-    .then(suspendedUser => {
-        // console.log(suspendedUser)
-        if(suspendedUser.matchedCount <= 0){
-            return res.status(400).json({
-                message: 'User not found.'
-            })
-        } else if(suspendedUser.modifiedCount <= 0){
-            return res.status(400).json({
-                message: 'User already suspended.'
-            })
-        } else {
-            return res.status(200).json({
-                message: 'User suspended successfully.'
-            })
-        }
-    })
-    .catch(err => {
-        return res.status(500).json({
-            message: 'An unexpected error occured. Please try again later.'
+    await userModel.updateOne({ email: userEmail, userStatus: 'Active' }, { userStatus: 'Suspended' })
+        .then(suspendedUser => {
+            // console.log(suspendedUser)
+            if (suspendedUser.matchedCount <= 0) {
+                return res.status(400).json({
+                    message: 'User not found.'
+                })
+            } else if (suspendedUser.modifiedCount <= 0) {
+                return res.status(400).json({
+                    message: 'User already suspended.'
+                })
+            } else {
+                return res.status(200).json({
+                    message: 'User suspended successfully.'
+                })
+            }
         })
-    })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occured. Please try again later.'
+            })
+        })
 })
 
 // verify email
-router.get('/verifyEmail:confCode', async (req, res) => {
+router.get('/verifyEmail', async (req, res) => {
     let confCode = req.params.confCode
-    await userModel.updateOne({confCode: confCode, userStatus: 'Registered'}, {userStatus: 'Active', confCode: genConfCode()})
-    .then(updated => {
-        if(updated.matchedCount <= 0){
-            return res.status(404).json({
-                message: 'Invalid verification link.'
-            })
-        } else {
-            return res.status(200).json({
-                message: 'Email verified successfully.'
-            })
-        }
-    })
-    .catch(err => {
-        return res.status(500).json({
-            message: 'An unexpected error occured. Please try again later.'
+    await userModel.updateOne({ confCode: confCode, userStatus: 'Registered' }, { userStatus: 'Active', confCode: genConfCode() })
+        .then(updated => {
+            if (updated.matchedCount <= 0) {
+                return res.status(404).json({
+                    message: 'Invalid verification link.'
+                })
+            } else {
+                return res.status(200).json({
+                    message: 'Email verified successfully.'
+                })
+            }
         })
-    })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occured. Please try again later.'
+            })
+        })
 })
 
 // request forgot password
-router.post('/requestForgotPassword', async(req, res) => {
+router.post('/requestForgotPassword', async (req, res) => {
     let newConfCode = genConfCode()
-    userModel.updateOne({email: req.body.email}, {confCode: newConfCode})
-    .then(updated => {
-        if(updated.matchedCount <= 0 || updated.modifiedCount <= 0){
-            return res.status(400).json({
-                message: 'User requesting password reset not found.'
-            })
-        } else {
-            jwt.sign({confCode: newConfCode}, process.env.ENCRYPTION_SECRET_USER, {expiresIn: 600}, (signErr, tempToken) => {
-                if(signErr){
-                    return res.status(500).json({
-                        message: 'An unexpected occurred. Please try again later!'
-                    })
-                } else {
-                    return res.status(200).json({
-                        message: 'Configure email alert here to send link with tempToken as url parameter.',
-                        tempToken: tempToken
-                    })
-                }
-            })
-        }
-    })
-    .catch(err => {
-        return res.status(500).json({
-            message: 'An unexpected occurred. Please try again later!'
+    userModel.updateOne({ email: req.body.email }, { confCode: newConfCode })
+        .then(updated => {
+            if (updated.matchedCount <= 0 || updated.modifiedCount <= 0) {
+                return res.status(400).json({
+                    message: 'User requesting password reset not found.'
+                })
+            } else {
+                jwt.sign({ confCode: newConfCode }, process.env.ENCRYPTION_SECRET_USER, { expiresIn: 600 }, (signErr, tempToken) => {
+                    if (signErr) {
+                        return res.status(500).json({
+                            message: 'An unexpected occurred. Please try again later!'
+                        })
+                    } else {
+                        return res.status(200).json({
+                            message: 'Configure email alert here to send link with tempToken as url parameter.',
+                            tempToken: tempToken
+                        })
+                    }
+                })
+            }
         })
-    })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected occurred. Please try again later!'
+            })
+        })
 })
 
 // reset forgotten password
@@ -227,20 +227,20 @@ router.post('/resetForgottenPassword/:tempToken', async (req, res) => {
         let tempDecoded = jwt.verify(req.params.tempToken, process.env.ENCRYPTION_SECRET_USER)
 
         bcrypt.hash(req.body.newPassword, 10)
-        .then(newHash => {
-            userModel.updateOne({confCode: tempDecoded.confCode}, {confCode: genConfCode(), password: newHash})
-            .then(updated => {
-                if(updated.matchedCount <= 0 || updated.modifiedCount <= 0){
-                    return res.status(500).json({
-                        message: 'An unexpected error occurred. Please try again later.'
+            .then(newHash => {
+                userModel.updateOne({ confCode: tempDecoded.confCode }, { confCode: genConfCode(), password: newHash })
+                    .then(updated => {
+                        if (updated.matchedCount <= 0 || updated.modifiedCount <= 0) {
+                            return res.status(500).json({
+                                message: 'An unexpected error occurred. Please try again later.'
+                            })
+                        } else {
+                            return res.status(200).json({
+                                message: 'Password reset successfully.'
+                            })
+                        }
                     })
-                } else {
-                    return res.status(200).json({
-                        message: 'Password reset successfully.'
-                    })
-                }
             })
-        })        
     } catch (err) {
         return res.status(500).json({
             message: 'An unexpected error occurred. Please try again later.'
@@ -250,92 +250,139 @@ router.post('/resetForgottenPassword/:tempToken', async (req, res) => {
 
 // reset password self
 router.post('/resetPassword', verifyUserTokenMiddleware, async (req, res) => {
-    let {oldPass, newPassOne, newPassTwo} = req.body
-    userModel.findOne({email: req.body.decodedUser.email})
-    .then(user => {
-        bcrypt.compare(oldPass, user.password)
-        .then(isMatch => {
-            if(!isMatch){
-                return res.status(403).clearCookie('auth_token_usr').json({
-                    message: 'Old password is incorrect. You will be logged out for security purposes. Kindly reset your password from the \'Forgot Password?\' option.'
+    let { oldPass, newPassOne, newPassTwo } = req.body
+    userModel.findOne({ email: req.body.decodedUser.email })
+        .then(user => {
+            bcrypt.compare(oldPass, user.password)
+                .then(isMatch => {
+                    if (!isMatch) {
+                        return res.status(403).clearCookie('auth_token_usr').json({
+                            message: 'Old password is incorrect. You will be logged out for security purposes. Kindly reset your password from the \'Forgot Password?\' option.'
+                        })
+                    }
                 })
-            }
-        })
-        .then(() => {
-            if(newPassOne === newPassTwo){
-                bcrypt.hash(newPassOne, 10)
-                .then(newHash => {
-                    userModel.updateOne({email: req.body.decodedUser.email}, {password: newHash, confCode: genConfCode()})
-                    .then(updated => {
-                        if(updated.matchedCount <= 0 || updated.modifiedCount <= 0){
-                            return res.status(500).json({
-                                message: 'An unexpected error occured. Please try again later.'
+                .then(() => {
+                    if (newPassOne === newPassTwo) {
+                        bcrypt.hash(newPassOne, 10)
+                            .then(newHash => {
+                                userModel.updateOne({ email: req.body.decodedUser.email }, { password: newHash, confCode: genConfCode() })
+                                    .then(updated => {
+                                        if (updated.matchedCount <= 0 || updated.modifiedCount <= 0) {
+                                            return res.status(500).json({
+                                                message: 'An unexpected error occured. Please try again later.'
+                                            })
+                                        } else {
+                                            return res.status(200).clearCookie('auth_token_usr').json({
+                                                message: 'Password reset successfully. Please sign-in again with your updated credentials.'
+                                            })
+                                        }
+                                    })
                             })
-                        } else {
-                            return res.status(200).clearCookie('auth_token_usr').json({
-                                message: 'Password reset successfully. Please sign-in again with your updated credentials.'
-                            })
-                        }
-                    })
+                    } else {
+                        return res.status(400).json({
+                            message: 'New passwords do not match.'
+                        })
+                    }
                 })
-            } else {
-                return res.status(400).json({
-                    message: 'New passwords do not match.'
-                })
-            }
         })
-    })
-    .catch(err => {
-        return res.status(500).json({
-            message: 'An unexpected error occured. Please try again later.'
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occured. Please try again later.'
+            })
         })
-    })
 })
 
+
+// add user - limited to admin - force register
+router.post('/register_admin', async (req, res) => {
+    let { fullname, percentage, email, phoneNum, password } = req.body
+
+    let newUser = new userModel({
+        fullname: fullname,
+        email: email,
+        phoneNum: phoneNum,
+        password: password,
+        percentage: (percentage) ? percentage : 0,
+        confCode: genConfCode()
+    })
+
+    // hash user provided password here
+    bcrypt.hash(newUser.password, 10)
+        .then(hash => {
+            newUser.password = hash
+            newUser.save()
+                .then(savedUser => {
+                    emailSuccess = sendAccountVerificationEmail(savedUser)
+                    if (emailSuccess) {
+                        return res.status(201).json({
+                            message: 'User registration successful. Kindly verify your provided email address.'
+                        })
+                    } else {
+                        return res.status(500).json({
+                            message: 'User registration successful. Contact Team AdvertSplash for account activation.'
+                        })
+                    }
+                })
+                .catch(saveErr => {
+                    if (saveErr.code == 11000 && saveErr.keyPattern.email == 1) {
+                        return res.status(400).json({
+                            message: 'An account with email ' + saveErr.keyValue.email + ' already exists.'
+                        })
+                    } else return res.status(500).json({
+                        message: 'An unexpected error occured. Please try again later.'
+                    })
+                })
+        })
+        .catch(hashErr => {
+            return res.status(500).json({
+                message: 'An unexpected error occured while securing your password. Please try again.'
+            })
+        })
+})
 
 // delete user - limited to admin - hard delete - delete all associated entities (apps, reports)
 router.post('/deleteUser_admin', verifyAdminTokenMiddleware, async (req, res) => {
     let userEmail = req.body.email
-    await userModel.deleteOne({email: userEmail})
-    .then(deletedUser => {
+    await userModel.deleteOne({ email: userEmail })
+        .then(deletedUser => {
 
-        // console.log(deletedUser)
-        
-        // delete all associated entities here
+            // console.log(deletedUser)
 
-        if(deletedUser.deletedCount <= 0){
-            return res.status(400).json({
-                message: 'User not found.'
+            // delete all associated entities here
+
+            if (deletedUser.deletedCount <= 0) {
+                return res.status(400).json({
+                    message: 'User not found.'
+                })
+            }
+
+            return res.status(200).json({
+                message: 'User deleted'
             })
-        }
-
-        return res.status(200).json({
-            message: 'User deleted'
         })
-    })
 })
 
 // restore user - limited to admin
 router.post('/restoreUser', verifyAdminTokenMiddleware, async (req, res) => {
     let userEmail = req.body.email
     // console.log(req.body);
-    userModel.updateOne({email: userEmail, userStatus: 'Suspended'}, {$set: {userStatus: 'Active'}})
-    .then(restoredUser => {
-        if(restoredUser.matchedCount <= 0){
-            return res.status(400).json({
-                message: 'User not found.'
-            })
-        }
+    userModel.updateOne({ email: userEmail, userStatus: 'Suspended' }, { $set: { userStatus: 'Active' } })
+        .then(restoredUser => {
+            if (restoredUser.matchedCount <= 0) {
+                return res.status(400).json({
+                    message: 'User not found.'
+                })
+            }
 
-        return res.status(200).json({
-            message: 'User restored successfully.'
+            return res.status(200).json({
+                message: 'User restored successfully.'
+            })
         })
-    })
-    .catch(err => {
-        return res.status(500).json({
-            message: 'An unexpected error occured. Please try again later.'
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occured. Please try again later.'
+            })
         })
-    })
 })
 
 // check user session
@@ -347,16 +394,16 @@ router.get('/checkUserSession', verifyUserTokenMiddleware, async (req, res) => {
 
 // GET unique user count
 router.get('/getUniqueUserCount', verifyAdminTokenMiddleware, async (req, res) => {
-    userModel.countDocuments({userStatus: 'Active'})
-    .then(count => {
-        return res.status(200).json({
-            count: count
+    userModel.countDocuments({ userStatus: 'Active' })
+        .then(count => {
+            return res.status(200).json({
+                count: count
+            })
         })
-    })
-    .catch(err => {
-        return res.status(500).json({
-            message: 'An unexpected error occured. Please try again later.'
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occured. Please try again later.'
+            })
         })
-    })
 })
 module.exports = router;

@@ -32,8 +32,13 @@ const userSchema = new mongoose.Schema({
     },
     confCode: {
         type: String,
-        unqiue: true,
+        unique: true,
         required: true
+    },
+    percentage: {
+        type: Number,
+        required: false,
+        default : 0
     }
 })
 const userModel = mongoose.model('user', userSchema)

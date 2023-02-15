@@ -62,7 +62,7 @@ router.post('/login', async (req, res) => {
                 let payload = {
                     _id: admin._id,
                     fullname: admin.fullname,
-                    email: admin.email
+                    email: admin.email 
                 }
     
                 jwt.sign(payload, process.env.ENCRYPTION_SECRET_ADMIN, {expiresIn: 172800}, (signErr, token) => {
