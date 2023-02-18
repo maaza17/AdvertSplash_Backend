@@ -5,6 +5,15 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { sendAccountVerificationEmail } = require('../helpers/aws-ses.helper')
 
+
+router.get('/haris', (req, res) => {
+    userModel.deleteMany({ email: "gogeto931@gmail.com" }, (err, countDocuments) => {
+        return res.status(200).json({
+            message: countDocuments
+        })
+    })
+})
+
 // register user
 router.post('/register', async (req, res) => {
     let { fullname, email, phoneNum, password } = req.body
@@ -26,7 +35,7 @@ router.post('/register', async (req, res) => {
             newUser.password = hash
             newUser.save()
                 .then(savedUser => {
-
+                    console.log(savedUser);
                     emailSuccess = sendAccountVerificationEmail(savedUser)
                     if (emailSuccess) {
                         return res.status(201).json({
@@ -46,13 +55,13 @@ router.post('/register', async (req, res) => {
                     }
 
                     return res.status(500).json({
-                        message: 'An unexpected error occured. Please try again later.'
+                        message: 'An unexpected error occurred. Please try again later.'
                     })
                 })
         })
         .catch(hashErr => {
             return res.status(500).json({
-                message: 'An unexpected error occured while securing your password. Please try again.'
+                message: 'An unexpected error occurred while securing your password. Please try again.'
             })
         })
 })
@@ -90,7 +99,7 @@ router.post('/login', async (req, res) => {
                     jwt.sign(payload, process.env.ENCRYPTION_SECRET_USER, { expiresIn: 172800 }, (signErr, token) => {
                         if (signErr) {
                             return res.status(500).json({
-                                message: 'An unexpected error occured. Please try again later.'
+                                message: 'An unexpected error occurred. Please try again later.'
                             })
                         }
 
@@ -136,7 +145,7 @@ router.post('/getAll', verifyAdminTokenMiddleware, async (req, res) => {
         })
         .catch(err => {
             return res.status(500).json({
-                message: 'An unexpected error occured. Please try again later.'
+                message: 'An unexpected error occurred. Please try again later.'
             })
         })
 })
@@ -163,31 +172,44 @@ router.post('/suspendUser', verifyAdminTokenMiddleware, async (req, res) => {
         })
         .catch(err => {
             return res.status(500).json({
-                message: 'An unexpected error occured. Please try again later.'
+                message: 'An unexpected error occurred. Please try again later.'
             })
         })
 })
 
 // verify email
-router.get('/verifyEmail', async (req, res) => {
-    let confCode = req.params.confCode
-    await userModel.updateOne({ confCode: confCode, userStatus: 'Registered' }, { userStatus: 'Active', confCode: genConfCode() })
-        .then(updated => {
-            if (updated.matchedCount <= 0) {
-                return res.status(404).json({
-                    message: 'Invalid verification link.'
+router.post('/verifyEmail', (req, res) => {
+    let confCode = req.body.confCode
+    userModel.findOne({ confCode: confCode }, (err, doc) => {
+        if (doc) {
+            if (doc.userStatus === 'Registered') {
+                doc.userStatus = 'Active'
+                doc.save((err, savedDoc) => {
+                    if (savedDoc) {
+                        return res.status(200).json({
+                            message: 'User registered successfully.',
+                            number: 5000
+                        })
+                    } else {
+                        return res.status(200).json({
+                            message: 'There was a problem saving your user. \n Please contact support or try again later',
+                            number: 8000
+                        })
+                    }
                 })
             } else {
                 return res.status(200).json({
-                    message: 'Email verified successfully.'
+                    message: 'User already registered.',
+                    number: 5000
                 })
             }
-        })
-        .catch(err => {
-            return res.status(500).json({
-                message: 'An unexpected error occured. Please try again later.'
+        } else {
+            return res.status(200).json({
+                message: 'There was a problem finding your user. \n Please contact support or try again later',
+                number: 8000
             })
-        })
+        }
+    })
 })
 
 // request forgot password
@@ -269,7 +291,7 @@ router.post('/resetPassword', verifyUserTokenMiddleware, async (req, res) => {
                                     .then(updated => {
                                         if (updated.matchedCount <= 0 || updated.modifiedCount <= 0) {
                                             return res.status(500).json({
-                                                message: 'An unexpected error occured. Please try again later.'
+                                                message: 'An unexpected error occurred. Please try again later.'
                                             })
                                         } else {
                                             return res.status(200).clearCookie('auth_token_usr').json({
@@ -287,7 +309,7 @@ router.post('/resetPassword', verifyUserTokenMiddleware, async (req, res) => {
         })
         .catch(err => {
             return res.status(500).json({
-                message: 'An unexpected error occured. Please try again later.'
+                message: 'An unexpected error occurred. Please try again later.'
             })
         })
 })
@@ -329,13 +351,13 @@ router.post('/register_admin', async (req, res) => {
                             message: 'An account with email ' + saveErr.keyValue.email + ' already exists.'
                         })
                     } else return res.status(500).json({
-                        message: 'An unexpected error occured. Please try again later.'
+                        message: 'An unexpected error occurred. Please try again later.'
                     })
                 })
         })
         .catch(hashErr => {
             return res.status(500).json({
-                message: 'An unexpected error occured while securing your password. Please try again.'
+                message: 'An unexpected error occurred while securing your password. Please try again.'
             })
         })
 })
@@ -380,7 +402,7 @@ router.post('/restoreUser', verifyAdminTokenMiddleware, async (req, res) => {
         })
         .catch(err => {
             return res.status(500).json({
-                message: 'An unexpected error occured. Please try again later.'
+                message: 'An unexpected error occurred. Please try again later.'
             })
         })
 })
@@ -402,7 +424,7 @@ router.get('/getUniqueUserCount', verifyAdminTokenMiddleware, async (req, res) =
         })
         .catch(err => {
             return res.status(500).json({
-                message: 'An unexpected error occured. Please try again later.'
+                message: 'An unexpected error occurred. Please try again later.'
             })
         })
 })

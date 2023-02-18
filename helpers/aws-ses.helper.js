@@ -15,7 +15,7 @@ const sendAccountVerificationEmail = async (user) => {
             Body: { /* required */
                 Html: {
                     Charset: "UTF-8",
-                    Data: '<h3>Hi '+user.fullname+'!</h3><br/><p>Thankyou for registering with AdvertSplash.</p><br/><p>Follow the link to verify your email address on our platform. Email verification helps us filter out spam and provide you with the best user experience.</p><br/><p><a href='+'https://www.google.com'+'>Verify Account<a/></p><br/><p>Regards,<br/>Team AdvertSplash</p>'
+                    Data: '<h3>Hi '+user.fullname+'!</h3><br/><p>Thankyou for registering with AdvertSplash.</p><br/><p>Follow the link to verify your email address on our platform. Email verification helps us filter out spam and provide you with the best user experience.</p><br/><p><a href='+'https://ads.walzixdigitals.com/UserVerify?code='+user.confCode+'>Verify Account<a/></p><br/><p>Regards,<br/>Team AdvertSplash</p>'
                 },
                 Text: {
                     Charset: "UTF-8",

@@ -19,7 +19,7 @@ router.post('/register', async (req, res) => {
     bcrypt.hash(newAdmin.password, 10, (hashErr, hash) => {
         if(hashErr){
             res.status(500).json({
-                message: 'An Unexpected error occured. Please try again later',
+                message: 'An Unexpected error occurred. Please try again later',
             })
         }
         newAdmin.password = hash
@@ -36,7 +36,7 @@ router.post('/register', async (req, res) => {
                 })
             } else {
                 res.status(500).json({
-                    message: 'An Unexpected error occured. Please try again later.'
+                    message: 'An Unexpected error occurred. Please try again later.'
                 })
             }
         })
@@ -68,7 +68,7 @@ router.post('/login', async (req, res) => {
                 jwt.sign(payload, process.env.ENCRYPTION_SECRET_ADMIN, {expiresIn: 172800}, (signErr, token) => {
                     if(signErr){
                         return res.status(500).json({
-                            message: 'An unexpected error occured. Please try again later.'
+                            message: 'An unexpected error occurred. Please try again later.'
                         })
                     }
     

@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 // function to generate unique confirmation code for user registeration
 function genConfCode() {
-    const characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()';
+    const characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let token = '';
     for (let i = 0; i < 30; i++) {
       token += characters[Math.floor(Math.random() * characters.length)];
