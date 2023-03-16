@@ -6,13 +6,13 @@ const jwt = require('jsonwebtoken')
 const { sendAccountVerificationEmail } = require('../helpers/aws-ses.helper')
 
 
-router.get('/haris', (req, res) => {
-    userModel.deleteMany({ email: "gogeto931@gmail.com" }, (err, countDocuments) => {
-        return res.status(200).json({
-            message: countDocuments
-        })
-    })
-})
+// router.get('/haris', (req, res) => {
+//     userModel.deleteMany({ email: "gogeto931@gmail.com" }, (err, countDocuments) => {
+//         return res.status(200).json({
+//             message: countDocuments
+//         })
+//     })
+// })
 
 // register user
 router.post('/register', async (req, res) => {
