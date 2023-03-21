@@ -1,9 +1,9 @@
 const AWS = require('aws-sdk')
 
 const SES = new AWS.SES({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_ACCESS_KEY,
-    region: process.env.AWS_REGION
+    accessKeyId: process.env.MY_AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.MY_AWS_ACCESS_KEY,
+    region: process.env.MY_AWS_REGION
 })
 
 // send account verification email - remember to change html in body
@@ -27,7 +27,7 @@ const sendAccountVerificationEmail = async (user) => {
                 Data: `TEST EMAIL - AWS SES`
             }
         },
-        Source: "AdvertSplash <" + process.env.AWS_FROM_EMAIL + ">", /* required */
+        Source: "AdvertSplash <" + process.env.MY_AWS_FROM_EMAIL + ">", /* required */
         ReplyToAddresses: []  /* required */
     }
 
