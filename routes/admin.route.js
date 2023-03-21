@@ -17,29 +17,29 @@ router.post('/register', async (req, res) => {
     })
 
     bcrypt.hash(newAdmin.password, 10, (hashErr, hash) => {
-        if(hashErr){
+        if (hashErr) {
             res.status(500).json({
                 message: 'An Unexpected error occurred. Please try again later',
             })
         }
         newAdmin.password = hash
         newAdmin.save()
-        .then(data => {
-            res.status(201).json({
-                message: 'Admin registered successfully'
+            .then(data => {
+                res.status(201).json({
+                    message: 'Admin registered successfully'
+                })
             })
-        })
-        .catch(err => {
-            if(err.code === 11000) {
-                res.status(409).json({
-                    message: 'Admin already exists'
-                })
-            } else {
-                res.status(500).json({
-                    message: 'An Unexpected error occurred. Please try again later.'
-                })
-            }
-        })
+            .catch(err => {
+                if (err.code === 11000) {
+                    res.status(409).json({
+                        message: 'Admin already exists'
+                    })
+                } else {
+                    res.status(500).json({
+                        message: 'An Unexpected error occurred. Please try again later.'
+                    })
+                }
+            })
     })
 })
 
@@ -50,36 +50,36 @@ router.post('/login', async (req, res) => {
     // validate inputs here
 
     adminModel.findOne({ email: email })
-    .then(admin => {
-        bcrypt.compare(password, admin.password)
-        .then(isMatch => {
-            if(!isMatch){
-                return res.status(401).json({
-                    message: 'Invalid credentials'
-                })
-            } else {
+        .then(admin => {
+            bcrypt.compare(password, admin.password)
+                .then(isMatch => {
+                    if (!isMatch) {
+                        return res.status(401).json({
+                            message: 'Invalid credentials'
+                        })
+                    } else {
 
-                let payload = {
-                    _id: admin._id,
-                    fullname: admin.fullname,
-                    email: admin.email 
-                }
-    
-                jwt.sign(payload, process.env.ENCRYPTION_SECRET_ADMIN, {expiresIn: 172800}, (signErr, token) => {
-                    if(signErr){
-                        return res.status(500).json({
-                            message: 'An unexpected error occurred. Please try again later.'
+                        let payload = {
+                            _id: admin._id,
+                            fullname: admin.fullname,
+                            email: admin.email
+                        }
+
+                        jwt.sign(payload, process.env.ENCRYPTION_SECRET_ADMIN, { expiresIn: 172800 }, (signErr, token) => {
+                            if (signErr) {
+                                return res.status(500).json({
+                                    message: 'An unexpected error occurred. Please try again later.'
+                                })
+                            }
+
+                            return res.status(200).cookie('auth_token_adm', token, { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
+                                message: "Login successful!",
+                                adminName: admin.fullname
+                            })
                         })
                     }
-    
-                    return res.status(200).cookie('auth_token_adm', token, {httpOnly: true, secure: process.env.NODE_ENV == 'production'}).json({
-                        message: "Login successful!",
-                        adminName:admin.fullname
-                    })
                 })
-            }
         })
-    })
 })
 
 // logout admin
