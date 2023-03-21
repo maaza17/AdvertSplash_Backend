@@ -30,7 +30,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.use(cors({origin: process.env.FRONTEND_ORIGIN, credentials: true}))
+app.use(cors())
 
 app.use(compression({
   level: 6,
