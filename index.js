@@ -17,7 +17,7 @@ var cors = require('cors');
 app.use(cors({ credentials: true, origin: true }));
 
 app.use(bodyParser.json({ limit: 20000000 }));
-app.use(cookieParser())
+app.use(cookieParser({sameSite: 'none'}))
 
 
 app.use(function (req, res, next) {
