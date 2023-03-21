@@ -13,7 +13,7 @@ const userRoute = require('./routes/user.route')
 const app = express();
 
 var cors = require('cors');
-app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+app.use(cors({ credentials: true, origin: process.env.FRONTEND_URL }));
 
 app.use(bodyParser.json({ limit: 20000000 }));
 app.use(cookieParser())
