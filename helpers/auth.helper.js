@@ -32,7 +32,6 @@ const verifyUserTokenMiddleware = (req, res, next) => {
 
 const verifyAdminTokenMiddleware = (req, res, next) => {
     let token = req.cookies.auth_token_adm
-    console.log("Admin Token : " + token)
     if (!token) {
         return res.status(403).json({
             message: 'Access denied. No token provided.'
