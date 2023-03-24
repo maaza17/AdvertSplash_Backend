@@ -84,7 +84,7 @@ router.post('/login', async (req, res) => {
 
 // logout admin
 router.get('/logout', async (req, res) => {
-    return res.status(200).clearCookie('auth_token_adm').json({
+    return res.status(200).clearCookie('auth_token_adm',{ httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
         message: 'Logout successful!'
     })
 })
