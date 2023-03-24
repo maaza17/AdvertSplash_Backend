@@ -84,7 +84,7 @@ router.post('/login', async (req, res) => {
 
 // logout admin
 router.get('/logout', async (req, res) => {
-    return res.status(200).clearCookie('auth_token_adm', { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
+    return res.status(200).clearCookie('auth_token_adm', { path: "/" }).json({
         message: 'Logout successful!'
     })
 })
@@ -97,7 +97,6 @@ router.get('/logout', async (req, res) => {
 
 // check admin session
 router.get('/checkAdminSession', verifyAdminTokenMiddleware, async (req, res) => {
-    console.log(req.cookies)
     return res.status(200).json({
         message: 'Session is valid.'
     })
