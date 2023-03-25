@@ -83,11 +83,15 @@ router.post('/login', async (req, res) => {
 
 // logout admin
 router.get('/logout', async (req, res) => {
-    res.cookie('auth_token_adm', 'none', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV == 'production',
-        sameSite: "none"
-    })
+    console.log("res")
+    console.log(res)
+    console.log("res cookie")
+    console.log(res.cookie)
+    // res.cookie('auth_token_adm', 'none', {
+    //     httpOnly: true,
+    //     secure: process.env.NODE_ENV == 'production',
+    //     sameSite: "none"
+    // })
 
     return res.status(200).json({
         message: "Logout successful! 4",
