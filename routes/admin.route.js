@@ -84,7 +84,7 @@ router.post('/login', async (req, res) => {
 
 // logout admin
 router.get('/logout', async (req, res) => {
-    return res.status(200).cookie('auth_token_adm', "null", { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
+    return res.status(200).cookie('auth_token_adm', "null", { maxAge: "0", httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
         message: "Logout successful! 2",
     })
     // return res.status(200).clearCookie('auth_token_adm', { domain: "adsplashserver.vercel.app", path: "/", secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
