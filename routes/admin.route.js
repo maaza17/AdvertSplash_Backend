@@ -92,8 +92,8 @@ router.get('/logout', async (req, res) => {
     //     secure: process.env.NODE_ENV == 'production',
     //     sameSite: "none"
     // })
-    req?.session?.cookie?.expires = true;
-    req?.session?.cookie?.maxAge = 1;
+    // req?.session?.cookie?.expires = true;
+    // req?.session?.cookie?.maxAge = 1;
 
     return res.status(200).cookie('auth_token_adm', "null", { maxAge: 0, expires: 1, httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
         message: "Logout successful! 6",
