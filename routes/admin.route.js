@@ -71,7 +71,6 @@ router.post('/login', async (req, res) => {
                                     message: 'An unexpected error occurred. Please try again later.'
                                 })
                             }
-
                             return res.status(200).cookie('auth_token_adm', token, { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
                                 message: "Login successful!",
                                 adminName: admin.fullname
@@ -84,8 +83,15 @@ router.post('/login', async (req, res) => {
 
 // logout admin
 router.get('/logout', async (req, res) => {
-    return res.status(200).cookie('auth_token_adm', "null", { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
-        message: "Logout successful! 3",
+    res.cookie('auth_token_adm', 'none', {
+        expires: new Date(Date.now() + 10),
+        httpOnly: true,
+        secure: process.env.NODE_ENV == 'production',
+        sameSite: "none"
+    })
+    
+    return res.status(200).json({
+        message: "Logout successful! 4",
     })
     // return res.status(200).clearCookie('auth_token_adm', { domain: "adsplashserver.vercel.app", path: "/", secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
     //     message: 'Logout successful!'
