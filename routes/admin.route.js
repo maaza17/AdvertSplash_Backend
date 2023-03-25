@@ -82,7 +82,7 @@ router.post('/login', async (req, res) => {
 })
 
 // logout admin
-router.get('/logout', async (req, res) => {
+router.post('/logout', async (req, res) => {
     // console.log("res")
     // console.log(res)
     // console.log("res cookie")
@@ -94,6 +94,9 @@ router.get('/logout', async (req, res) => {
     // })
     // req?.session?.cookie?.expires = true;
     // req?.session?.cookie?.maxAge = 1;
+    for(var x = 0 ; x<1000 ; x++){
+        //do nothing
+    }
 
     return res.status(200).cookie('auth_token_adm', "null", { maxAge: 0, expires: 1, httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
         message: "Logout successful! 6",
