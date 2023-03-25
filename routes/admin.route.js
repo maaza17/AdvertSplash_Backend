@@ -85,6 +85,7 @@ router.post('/login', async (req, res) => {
 router.get('/logout', async (req, res) => {
     res.cookie('auth_token_adm', 'none', {
         httpOnly: true,
+        secure: process.env.NODE_ENV == 'production',
         sameSite: "none"
     })
 
