@@ -94,10 +94,14 @@ router.get('/logout', async (req, res) => {
     //     sameSite: "none"
     // })
 
-    Cookies.remove('auth_token_adm')
+    Cookies.remove('auth_token_adm', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV == 'production',
+        sameSite: "none"
+    })
 
     return res.status(200).json({
-        message: "Logout successful! 4",
+        message: "Logout successful! 5",
     })
     // return res.status(200).clearCookie('auth_token_adm', { domain: "adsplashserver.vercel.app", path: "/", secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
     //     message: 'Logout successful!'
