@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { verifyAdminTokenMiddleware } = require('../helpers/auth.helper');
 const adminModel = require('../models/admin.model');
+const Cookies = require('js-cookie')
 
 // register admin
 router.post('/register', async (req, res) => {
@@ -83,15 +84,17 @@ router.post('/login', async (req, res) => {
 
 // logout admin
 router.get('/logout', async (req, res) => {
-    console.log("res")
-    console.log(res)
-    console.log("res cookie")
-    console.log(res.cookie)
+    // console.log("res")
+    // console.log(res)
+    // console.log("res cookie")
+    // console.log(res.cookie)
     // res.cookie('auth_token_adm', 'none', {
     //     httpOnly: true,
     //     secure: process.env.NODE_ENV == 'production',
     //     sameSite: "none"
     // })
+
+    Cookies.remove('auth_token_adm')
 
     return res.status(200).json({
         message: "Logout successful! 4",
