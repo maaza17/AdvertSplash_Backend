@@ -98,13 +98,13 @@ router.post('/logout', async (req, res) => {
     //     //do nothing
     // }
 
-    return res.status(200).cookie('auth_token_adm', "null", { maxAge: 0, expires: 1, httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
-        message: "Logout successful! 6",
-    })
-
-    // return res.status(200).clearCookie('auth_token_adm', { domain: "adsplashserver.vercel.app", path: "/", secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
-    //     message: 'Logout successful!'
+    // return res.status(200).cookie('auth_token_adm', "null", { maxAge: 0, expires: 1, httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
+    //     message: "Logout successful! 6",
     // })
+
+    return res.status(200).clearCookie('auth_token_adm', { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
+        message: 'Logout successful!'
+    })
 })
 
 // request reset password
