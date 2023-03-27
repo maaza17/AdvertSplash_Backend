@@ -67,7 +67,7 @@ router.get('/getAllAppsAggregated', verifyAdminTokenMiddleware, (req, res) => {
 })
 
 router.get('/getAllApps', verifyAdminTokenMiddleware, (req, res) => {
-    reportModel.find({}).then(reports => {
+    appModel.find({}).then(reports => {
         res.status(200).json({
             data: reports
         })
