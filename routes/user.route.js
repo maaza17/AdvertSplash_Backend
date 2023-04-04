@@ -121,8 +121,8 @@ router.post('/login', async (req, res) => {
 })
 
 // logout user
-router.get('/logout', async (req, res) => {
-    return res.status(200).clearCookie('auth_token_usr').json({
+router.post('/logout', async (req, res) => {
+    return res.status(200).clearCookie('auth_token_usr', { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
         message: 'Logout successful!'
     })
 })
@@ -278,7 +278,7 @@ router.post('/resetPassword', verifyUserTokenMiddleware, async (req, res) => {
             bcrypt.compare(oldPass, user.password)
                 .then(isMatch => {
                     if (!isMatch) {
-                        return res.status(403).clearCookie('auth_token_usr').json({
+                        return res.status(403).clearCookie('auth_token_usr', { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
                             message: 'Old password is incorrect. You will be logged out for security purposes. Kindly reset your password from the \'Forgot Password?\' option.'
                         })
                     }
@@ -294,7 +294,7 @@ router.post('/resetPassword', verifyUserTokenMiddleware, async (req, res) => {
                                                 message: 'An unexpected error occurred. Please try again later.'
                                             })
                                         } else {
-                                            return res.status(200).clearCookie('auth_token_usr').json({
+                                            return res.status(200).clearCookie('auth_token_usr', { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
                                                 message: 'Password reset successfully. Please sign-in again with your updated credentials.'
                                             })
                                         }
