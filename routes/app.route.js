@@ -33,38 +33,38 @@ router.post('/addApplication', verifyAdminTokenMiddleware, (req, res) => {
         })
 })
 
-router.get('/getAllAppsAggregated', verifyAdminTokenMiddleware, (req, res) => {
-    // remember to agregate and sum the count of ad unit IDs here and return in the response
+// router.get('/getAllAppsAggregated', verifyAdminTokenMiddleware, (req, res) => {
+//     // remember to agregate and sum the count of ad unit IDs here and return in the response
 
-    // reportModel.aggregate([
-    //     {$group: {_id: '$appName', adCount: {$countUnique: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}}
-    // ])
-    reportModel.aggregate([
-        {
-            $group: {
-                _id: '$appName',
-                date: { '$first': '$date' },
-                comID: { '$first': '$comID' },
-                country: { '$first': '$country' },
-                adType: { '$first': '$adType' },
-                totalRevenue: { $sum: '$estRevenue' },
-                avgAdRequestCTR: { $avg: "$adRequestCTR" },
-                adImpressionsToDate: { $sum: "$adImpressions" }
-            }
-        }
-    ])
-        .then(reports => {
-            res.status(200).json({
-                data: reports
-            })
-        })
-        .catch(err => {
-            res.status(500).json({
-                message: err.message,
-                error: err
-            })
-        })
-})
+//     // reportModel.aggregate([
+//     //     {$group: {_id: '$appName', adCount: {$countUnique: '$dfpAdUnit'}, totalRevenue: {$sum: '$estRevenue'},  avgAdRequestCTR: {$avg: "$adRequestCTR"}, adImpressionsToDate: {$sum: "$adImpressions"}}}
+//     // ])
+//     reportModel.aggregate([
+//         {
+//             $group: {
+//                 _id: '$appName',
+//                 date: { '$first': '$date' },
+//                 comID: { '$first': '$comID' },
+//                 country: { '$first': '$country' },
+//                 adType: { '$first': '$adType' },
+//                 totalRevenue: { $sum: '$estRevenue' },
+//                 avgAdRequestCTR: { $avg: "$adRequestCTR" },
+//                 adImpressionsToDate: { $sum: "$adImpressions" }
+//             }
+//         }
+//     ])
+//         .then(reports => {
+//             res.status(200).json({
+//                 data: reports
+//             })
+//         })
+//         .catch(err => {
+//             res.status(500).json({
+//                 message: err.message,
+//                 error: err
+//             })
+//         })
+// })
 
 router.get('/getAllApps', verifyAdminTokenMiddleware, (req, res) => {
     appModel.find({}).then(reports => {
@@ -79,82 +79,74 @@ router.get('/getAllApps', verifyAdminTokenMiddleware, (req, res) => {
     })
 })
 
-// router.get('/haris', (req, res) => {
-//     reportModel.find({}, (err, reports) => {
-//         res.status(200).json({
-//             data: reports
+// // router.post('/getAppsByUser_admin', verifyAdminTokenMiddleware, (req, res) => {
+// //     let { clientEmail } = req.body
+// //     appModel.find({ clientEmail: clientEmail })
+// //         .then(result => {
+
+// //             // remember to agregate and sum the count of ad unit IDs here and return in the response
+// //             let userApps = result.map(function (app) { return app.appName })
+
+// //             reportModel.aggregate([
+// //                 { $match: { appName: { $in: userApps } } },
+// //                 { $group: { _id: '$appName', adCount: { $addToSet: '$dfpAdUnit' }, totalRevenue: { $sum: '$estRevenue' }, avgAdRequestCTR: { $avg: "$adRequestCTR" }, adImpressionsToDate: { $sum: "$adImpressions" } } },
+// //                 { $unwind: '$adCount' },
+// //                 { $group: { _id: '$appName', adCount: { $sum: '$adCount' }, totalRevenue: { $sum: '$estRevenue' }, avgAdRequestCTR: { $avg: "$adRequestCTR" }, adImpressionsToDate: { $sum: "$adImpressions" } } },
+// //             ])
+// //                 .then(reports => {
+// //                     res.status(200).json({
+// //                         data: reports
+// //                     })
+// //                 })
+// //                 .catch(err => {
+// //                     res.status(500).json({
+// //                         message: 'An unexpected error occurred. Please try again later.',
+// //                         error: err.message
+// //                     })
+// //                 })
+
+// //         })
+// //         .catch(err => {
+// //             res.status(500).json({
+// //                 message: 'Could not get apps for user.',
+// //                 error: err
+// //             })
+// //         })
+// // })
+
+// router.post('/getAppsByUser_user', verifyUserTokenMiddleware, (req, res) => {
+//     let { email } = req.body.decodedUser
+//     appModel.find({ clientEmail: email })
+//         .then(result => {
+
+//             // remember to agregate and sum the count of ad unit IDs here and return in the response
+//             let userApps = result.map(function (app) { return app.appName })
+
+//             reportModel.aggregate([
+//                 { $match: { appName: { $in: userApps } } },
+//                 { $group: { _id: '$appName', adCount: { $addToSet: '$dfpAdUnit' }, totalRevenue: { $sum: '$estRevenue' }, avgAdRequestCTR: { $avg: "$adRequestCTR" }, adImpressionsToDate: { $sum: "$adImpressions" } } },
+//                 { $unwind: '$adCount' },
+//                 { $group: { _id: '$appName', adCount: { $sum: '$adCount' }, totalRevenue: { $sum: '$estRevenue' }, avgAdRequestCTR: { $avg: "$adRequestCTR" }, adImpressionsToDate: { $sum: "$adImpressions" } } },
+//             ])
+//                 .then(reports => {
+//                     res.status(200).json({
+//                         data: reports
+//                     })
+//                 })
+//                 .catch(err => {
+//                     res.status(500).json({
+//                         message: 'An unexpected error occurred. Please try again later.',
+//                         error: err.message
+//                     })
+//                 })
+
 //         })
-//     }) 
+//         .catch(err => {
+//             res.status(500).json({
+//                 message: 'An unexpected error occurred. Please try again later.'
+//             })
+//         })
 // })
-
-router.post('/getAppsByUser_admin', verifyAdminTokenMiddleware, (req, res) => {
-    let { clientEmail } = req.body
-    appModel.find({ clientEmail: clientEmail })
-        .then(result => {
-
-            // remember to agregate and sum the count of ad unit IDs here and return in the response
-            let userApps = result.map(function (app) { return app.appName })
-
-            reportModel.aggregate([
-                { $match: { appName: { $in: userApps } } },
-                { $group: { _id: '$appName', adCount: { $addToSet: '$dfpAdUnit' }, totalRevenue: { $sum: '$estRevenue' }, avgAdRequestCTR: { $avg: "$adRequestCTR" }, adImpressionsToDate: { $sum: "$adImpressions" } } },
-                { $unwind: '$adCount' },
-                { $group: { _id: '$appName', adCount: { $sum: '$adCount' }, totalRevenue: { $sum: '$estRevenue' }, avgAdRequestCTR: { $avg: "$adRequestCTR" }, adImpressionsToDate: { $sum: "$adImpressions" } } },
-            ])
-                .then(reports => {
-                    res.status(200).json({
-                        data: reports
-                    })
-                })
-                .catch(err => {
-                    res.status(500).json({
-                        message: 'An unexpected error occurred. Please try again later.',
-                        error: err.message
-                    })
-                })
-
-        })
-        .catch(err => {
-            res.status(500).json({
-                message: 'Could not get apps for user.',
-                error: err
-            })
-        })
-})
-
-router.post('/getAppsByUser_user', verifyUserTokenMiddleware, (req, res) => {
-    let { email } = req.body.decodedUser
-    appModel.find({ clientEmail: email })
-        .then(result => {
-
-            // remember to agregate and sum the count of ad unit IDs here and return in the response
-            let userApps = result.map(function (app) { return app.appName })
-
-            reportModel.aggregate([
-                { $match: { appName: { $in: userApps } } },
-                { $group: { _id: '$appName', adCount: { $addToSet: '$dfpAdUnit' }, totalRevenue: { $sum: '$estRevenue' }, avgAdRequestCTR: { $avg: "$adRequestCTR" }, adImpressionsToDate: { $sum: "$adImpressions" } } },
-                { $unwind: '$adCount' },
-                { $group: { _id: '$appName', adCount: { $sum: '$adCount' }, totalRevenue: { $sum: '$estRevenue' }, avgAdRequestCTR: { $avg: "$adRequestCTR" }, adImpressionsToDate: { $sum: "$adImpressions" } } },
-            ])
-                .then(reports => {
-                    res.status(200).json({
-                        data: reports
-                    })
-                })
-                .catch(err => {
-                    res.status(500).json({
-                        message: 'An unexpected error occurred. Please try again later.',
-                        error: err.message
-                    })
-                })
-
-        })
-        .catch(err => {
-            res.status(500).json({
-                message: 'An unexpected error occurred. Please try again later.'
-            })
-        })
-})
 
 // GET unique mobile apps count
 router.get('/getUniqueMobileAppsCount', verifyAdminTokenMiddleware, (req, res) => {

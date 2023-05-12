@@ -4,15 +4,17 @@ const { genConfCode, verifyUserTokenMiddleware, verifyAdminTokenMiddleware } = r
 const { query } = require('express');
 const isEmpty = require('is-empty');
 
-// GET filtered and/or aggregated view - user
-router.get('/filteredReportsUser', verifyUserTokenMiddleware, async (req, res) => {
-    let { filterApp, filterStartDate, filterAdTypes, filterEndDate, filterCountry, aggregateByApp } = req.query
+// POST reportsUser
+router.post('/reportsUser', verifyUserTokenMiddleware, async (req, res) => {
+    // sample api call
+    // localhost:7000/api/report/reportsUser/?filterApp=Live Cricket TV -Watch Matches|FightClub - Boxing UFC Live&filterStartDate=01-20-2023&filterEndDate=01-24-2023&filterAdTypes=Banner,App-Open&filterCountry=Pakistan&byApp=true&byDate=true&pageNum=1
+    let {byApp, byDate, filterAdTypes, filterCountry, filterStartDate, filterEndDate, filterApp, pageNum} = req.query
 
     // set filterCriteria object
-    let filterCriteria = {}
+    let filterCriteria = {clientEmail: req.body.decodedUser.email}
     filterCirteria = !isEmpty(filterCountry) ? filterCriteria.country = { $in: filterCountry.split(',') } : filterCriteria
     filterCirteria = !isEmpty(filterAdTypes) ? filterCriteria.adType = { $in: filterAdTypes.split(',') } : filterCriteria
-    filterCirteria = !isEmpty(filterApp) ? filterCriteria.appName = { $in: filterApp.split(',') } : filterCriteria
+    filterCirteria = !isEmpty(filterApp) ? filterCriteria.appName = { $in: filterApp.split('|') } : filterCriteria
     if (!isEmpty(filterStartDate) && !isEmpty(filterEndDate)) {
         filterCriteria.date = {
             $gte: Date.parse(filterStartDate),
@@ -24,47 +26,57 @@ router.get('/filteredReportsUser', verifyUserTokenMiddleware, async (req, res) =
         filterCriteria.date = { $gte: Date.parse(filterStartDate) }
     }
 
-    if (!isEmpty(aggregateByApp)) {
+    if(isEmpty(byApp) && isEmpty(byDate)){
+        reportModel.find(filterCriteria).sort({'date':-1}).skip((parseInt(pageNum)-1)*100).limit(100)
+        .then(reports => {
+            return res.status(200).json({
+                reports: reports,
+                filterCriteria: filterCriteria
+            })
+        }).catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.',
+                filterCriteria: filterCriteria
+            })
+        })
+    } else {
+        // set groupBy object
+        let aggregateObj = {}
+        if(!isEmpty(byApp)){
+            aggregateObj = {$group : {
+                _id: "$appName", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, clicks: { $sum: "$clicks" }, adCTR: { $avg: "$adCTR" },
+                cpc: { $sum: "$cpc" }, lift: { $avg: "$lift"}, revenue: { $sum: "$estRevenue"}, adImpressions: { $sum: "$adImpressions"}, adeCPM: { $sum: "$adeCPM" }
+            }}
+        } else if(!isEmpty(byDate)){
+            aggregateObj = {$group : {
+                _id: "$date", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, clicks: { $sum: "$clicks" }, adCTR: { $avg: "$adCTR" },
+                cpc: { $sum: "$cpc" }, lift: { $avg: "$lift"}, revenue: { $sum: "$estRevenue"}, adImpressions: { $sum: "$adImpressions"}, adeCPM: { $sum: "$adeCPM" }
+            }}
+        }
+    
         reportModel.aggregate([
-            { $match: filterCriteria },
-            {
-                $group: {
-                    _id: "$appName", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, matchedRequests: { $sum: "$matchedRequests" },
-                    coverage: { $avg: "$coverage" }, clicks: { $sum: "$clicks" }, adRequestCTR: { $avg: "$adRequestCTR" }, ctr: { $avg: "$ctr" },
-                    adCTR: { $avg: "$adCTR" }, cpc: { $sum: "$cpc" }, adRequesteCPM: { $sum: "$adRequesteCPM" }, matchedeCPM: { $sum: "$matchedeCPM" }
-                }
-            }
-
-        ]).then(reports => {
+            {$match: filterCriteria},
+            aggregateObj
+        ]).sort({'date':-1}).skip((parseInt(pageNum)-1)*100).limit(100)
+        .then(reports => {
             return res.status(200).json({
                 reports: reports,
                 filterCriteria: filterCriteria,
-                aggregated: true
             })
         }).catch(err => {
             return res.status(500).json({
                 message: 'An unexpected error occurred. Please try again later.',
                 err: err,
-                filterCriteria: filterCriteria,
-                aggregated: true
-            })
-        })
-    } else {
-        reportModel.find(filterCriteria).then(reports => {
-            return res.status(200).json({
-                reports: reports,
-                filterCriteria: filterCriteria
-            })
-        }).catch(err => {
-            return res.status(500).json({
-                message: 'An unexpected error occurred. Please try again later.',
                 filterCriteria: filterCriteria
             })
         })
     }
+
 })
 
-router.get('/reportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
+
+// POST reportsAdmin
+router.post('/reportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
     // sample api call
     // localhost:7000/api/report/reportsAdmin/?filterApp=Live Cricket TV -Watch Matches|FightClub - Boxing UFC Live&filterStartDate=01-20-2023&filterEndDate=01-24-2023&filterAdTypes=Banner,App-Open&filterCountry=Pakistan&byApp=true&byUser=true&byDate=true&pageNum=1
     let {byApp, byDate, byUser, filterAdTypes, filterCountry, filterStartDate, filterEndDate, filterApp, pageNum} = req.query
@@ -138,34 +150,77 @@ router.get('/reportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
 
 })
 
-router.get('/getReportTypesDropdown', verifyAdminTokenMiddleware, async (req, res) => {
-    const types = await reportModel.aggregate([
-        { $group: { _id: '$adType' } },
-
-    ])
-    const name = await reportModel.aggregate([
-        { $group: { _id: '$appName' } },
-
-    ])
-    const country = await reportModel.aggregate([
-        { $group: { _id: '$country' } },
-
-    ])
-
-    let appTypes = types.map(dataByType => dataByType._id)
-    let appNames = name.map(dataByName => dataByName._id)
-    let appCountries = country.map(dataByCountry => dataByCountry._id)
-
-    return res.status(200).json({
-        types: appTypes,
-        names: appNames,
-        countries: appCountries
-    })
+router.get('/getReportDropdownAdmin', verifyAdminTokenMiddleware, async (req, res) => {
+    try{
+        const types = await reportModel.aggregate([
+            { $group: { _id: '$adType' } },
+    
+        ])
+        const name = await reportModel.aggregate([
+            { $group: { _id: '$appName' } },
+    
+        ])
+        const country = await reportModel.aggregate([
+            { $group: { _id: '$country' } },
+    
+        ])
+        
+        const users = await appModel.aggregate([
+            { $group: { _id: '$clientEmail' } },
+        ])
+    
+        let appTypes = types.map(dataByType => dataByType._id)
+        let appNames = name.map(dataByName => dataByName._id)
+        let appCountries = country.map(dataByCountry => dataByCountry._id)
+        let appUsers = users.map(dataByUser => dataByUser._id)
+    
+        return res.status(200).json({
+            types: appTypes,
+            names: appNames,
+            countries: appCountries,
+            users: appUsers
+        })
+    } catch (err) {
+        return res.status(500).json({
+            message: 'An unexpected error occurred. Please try again later.',
+            err: err
+        })
+    }
 
 })
-// POST bulk upload reports
 
-// POST delete reports - filtered
+router.get('/getReportDropdownUser', verifyUserTokenMiddleware, async (req, res) => {
+    try{
+        const types = await reportModel.aggregate([
+            { $group: { _id: '$adType' } },
+    
+        ])
+        const name = await reportModel.aggregate([
+            { $group: { _id: '$appName' } },
+    
+        ])
+        const country = await reportModel.aggregate([
+            { $group: { _id: '$country' } },
+    
+        ])
+    
+        let appTypes = types.map(dataByType => dataByType._id)
+        let appNames = name.map(dataByName => dataByName._id)
+        let appCountries = country.map(dataByCountry => dataByCountry._id)
+    
+        return res.status(200).json({
+            types: appTypes,
+            names: appNames,
+            countries: appCountries
+        })
+    } catch (err) {
+        return res.status(500).json({
+            message: 'An unexpected error occurred. Please try again later.',
+            err: err
+        })
+    }
+
+})
 
 // GET aggregated clicks last 30 days
 router.get('/aggregatedClicks', verifyAdminTokenMiddleware, async (req, res) => {
@@ -210,18 +265,18 @@ router.get('/aggregatedCTR', verifyAdminTokenMiddleware, async (req, res) => {
     let tempDate = Date.now() - 2592000
     reportModel.aggregate([
         { $match: { date: { $gte: { tempDate } } } },
-        { $group: { _id: null, ctr: { $avg: "$ctr" } } }
+        { $group: { _id: null, adCTR: { $avg: "$adCTR" } } }
     ])
-        .then(data => {
-            return res.status(200).json({
-                ctr: data
-            })
+    .then(data => {
+        return res.status(200).json({
+            adCTR: data
         })
-        .catch(err => {
-            return res.status(500).json({
-                message: 'An unexpected error occurred. Please try again later.'
-            })
+    })
+    .catch(err => {
+        return res.status(500).json({
+            message: 'An unexpected error occurred. Please try again later.'
         })
+    })
 })
 
 // GET aggregated revenue last 30 days
@@ -246,7 +301,7 @@ router.get('/aggregatedRevenue', verifyAdminTokenMiddleware, async (req, res) =>
 // GET dashboard stats for graph- views, clicks, revenue, CTR across all time for graph
 router.get('/dashboardStats', verifyAdminTokenMiddleware, async (req, res) => {
     reportModel.aggregate([
-        { $group: { _id: { year: { $year: "$date" }, month: { $month: "$date" } }, clicks: { $sum: "$clicks" }, views: { $sum: "$adImpressions" }, ctr: { $avg: "$ctr" }, revenue: { $sum: "$estRevenue" } } }
+        { $group: { _id: { year: { $year: "$date" }, month: { $month: "$date" } }, clicks: { $sum: "$clicks" }, views: { $sum: "$adImpressions" }, adCTR: { $avg: "$adCTR" }, revenue: { $sum: "$estRevenue" } } }
     ])
         .then(data => {
             return res.status(200).json({
