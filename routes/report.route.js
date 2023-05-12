@@ -4,138 +4,6 @@ const { genConfCode, verifyUserTokenMiddleware, verifyAdminTokenMiddleware } = r
 const { query } = require('express');
 const isEmpty = require('is-empty');
 
-// define routes here
-
-// // GET filtered and/or aggregated view - admin
-// router.get('/filteredReportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
-//     let {filterApp, filterStartDate, filterAdTypes, filterEndDate, filterCountry, aggregateByApp} = req.query
-//     // console.log(req.query);
-//     // set filterCriteria object
-//     let filterCriteria = {}
-//     filterCirteria = !isEmpty(filterCountry)?filterCriteria.country = { $in: filterCountry.split(',') }:filterCriteria
-//     filterCirteria = !isEmpty(filterAdTypes)?filterCriteria.adType = { $in: filterAdTypes.split(',') }:filterCriteria
-//     filterCirteria = !isEmpty(filterApp)?filterCriteria.appName = { $in: filterApp.split(',') }:filterCriteria
-//     if(!isEmpty(filterStartDate) && !isEmpty(filterEndDate)){
-//         filterCriteria.date = {
-//             $gte: Date.parse(filterStartDate),
-//             $lte: Date.parse(filterEndDate)
-//         }
-//     } else if(!isEmpty(filterEndDate)){
-//         filterCriteria.date = { $lte: Date.parse(filterEndDate) }
-//     } else if(!isEmpty(filterStartDate)){
-//         filterCriteria.date = { $gte: Date.parse(filterStartDate)}
-//     }
-
-//     if(aggregateByApp==="true"){
-//         console.log('aggregated call')
-//         reportModel.aggregate([
-//             {$match: filterCriteria},
-//             {$group: {_id: "$appName", adCount: {$addToSet: '$dfpAdUnit'}, exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
-//                     coverage: {$avg: "$coverage"}, clicks: {$sum: "$clicks"}, adRequestCTR: {$avg: "$adRequestCTR"}, ctr: {$avg: "$ctr"},
-//                     adCTR: {$avg: "$adCTR"},cpc: {$sum: "$cpc"}, adRequesteCPM: {$sum: "$adRequesteCPM"}, matchedeCPM: {$sum: "$matchedeCPM"},
-//                     lift: {$avg: "$lift"}, estRevenue: {$sum: "$estRevenue"}, adImpressions: {$sum: "$adImpressions"}, adeCPM: {$sum: "$adeCPM"}
-//                 }
-//             },
-//             {$unwind: '$adCount'},
-//             {$group: {_id: "$appName", adCount: {$sum: '$dfpAdUnit'}, exchangeRequests: {$sum: "$exchangeRequests"}, matchedRequests: {$sum: "$matchedRequests"},
-//             coverage: {$avg: "$coverage"}, clicks: {$sum: "$clicks"}, adRequestCTR: {$avg: "$adRequestCTR"}, ctr: {$avg: "$ctr"},
-//             adCTR: {$avg: "$adCTR"},cpc: {$sum: "$cpc"}, adRequesteCPM: {$sum: "$adRequesteCPM"}, matchedeCPM: {$sum: "$matchedeCPM"},
-//             lift: {$avg: "$lift"}, estRevenue: {$sum: "$estRevenue"}, adImpressions: {$sum: "$adImpressions"}, adeCPM: {$sum: "$adeCPM"}
-//         }
-//     },
-//         ])
-//         .then(reports => {
-//             return res.status(200).json({
-//                 reports: reports,
-//                 filterCriteria: filterCriteria,
-//                 aggregated: true
-//             })
-//         })
-//         .catch(err => {
-//             return res.status(500).json({
-//                 message: 'An unexpected error occurred. Please try again later.',
-//                 err: err,
-//                 filterCriteria: filterCriteria,
-//                 aggregated: true
-//             })
-//         })
-//     } else {
-//         reportModel.find(filterCriteria)
-//         .then(reports => {
-//             return res.status(200).json({
-//                 reports: reports,
-//                 filterCriteria: filterCriteria
-//             })
-//         })
-//         .catch(err => {
-//             return res.status(500).json({
-//                 message: 'An unexpected error occurred. Please try again later.',
-//                 filterCriteria: filterCriteria
-//             })
-//         })
-//     }
-// })
-
-// GET filtered and/or aggregated view - admin
-router.get('/filteredReportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
-    let { filterApp, filterStartDate, filterAdTypes, filterEndDate, filterCountry, aggregateByApp } = req.query
-    // console.log(req.query);
-    // set filterCriteria object
-    let filterCriteria = {}
-    filterCirteria = !isEmpty(filterCountry) ? filterCriteria.country = { $in: filterCountry.split(',') } : filterCriteria
-    filterCirteria = !isEmpty(filterAdTypes) ? filterCriteria.adType = { $in: filterAdTypes.split(',') } : filterCriteria
-    filterCirteria = !isEmpty(filterApp) ? filterCriteria.appName = { $in: filterApp.split(',') } : filterCriteria
-    if (!isEmpty(filterStartDate) && !isEmpty(filterEndDate)) {
-        filterCriteria.date = {
-            $gte: Date.parse(filterStartDate),
-            $lte: Date.parse(filterEndDate)
-        }
-    } else if (!isEmpty(filterEndDate)) {
-        filterCriteria.date = { $lte: Date.parse(filterEndDate) }
-    } else if (!isEmpty(filterStartDate)) {
-        filterCriteria.date = { $gte: Date.parse(filterStartDate) }
-    }
-
-    if (!isEmpty(aggregateByApp)) {
-        reportModel.aggregate([
-            { $match: filterCriteria },
-            {
-                $group: {
-                    _id: "$appName", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, matchedRequests: { $sum: "$matchedRequests" },
-                    coverage: { $avg: "$coverage" }, clicks: { $sum: "$clicks" }, adRequestCTR: { $avg: "$adRequestCTR" }, ctr: { $avg: "$ctr" },
-                    adCTR: { $avg: "$adCTR" }, cpc: { $sum: "$cpc" }, adRequesteCPM: { $sum: "$adRequesteCPM" }, matchedeCPM: { $sum: "$matchedeCPM" }
-                }
-            }
-
-        ]).then(reports => {
-            return res.status(200).json({
-                reports: reports,
-                filterCriteria: filterCriteria,
-                aggregated: true
-            })
-        }).catch(err => {
-            return res.status(500).json({
-                message: 'An unexpected error occurred. Please try again later.',
-                err: err,
-                filterCriteria: filterCriteria,
-                aggregated: true
-            })
-        })
-    } else {
-        reportModel.find(filterCriteria).then(reports => {
-            return res.status(200).json({
-                reports: reports,
-                filterCriteria: filterCriteria
-            })
-        }).catch(err => {
-            return res.status(500).json({
-                message: 'An unexpected error occurred. Please try again later.',
-                filterCriteria: filterCriteria
-            })
-        })
-    }
-})
-
 // GET filtered and/or aggregated view - user
 router.get('/filteredReportsUser', verifyUserTokenMiddleware, async (req, res) => {
     let { filterApp, filterStartDate, filterAdTypes, filterEndDate, filterCountry, aggregateByApp } = req.query
@@ -195,6 +63,81 @@ router.get('/filteredReportsUser', verifyUserTokenMiddleware, async (req, res) =
         })
     }
 })
+
+router.get('/reportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
+    // sample api call
+    // localhost:7000/api/report/reportsAdmin/?filterApp=Live Cricket TV -Watch Matches|FightClub - Boxing UFC Live&filterStartDate=01-20-2023&filterEndDate=01-24-2023&filterAdTypes=Banner,App-Open&filterCountry=Pakistan&byApp=true&byUser=true&byDate=true&pageNum=1
+    let {byApp, byDate, byUser, filterAdTypes, filterCountry, filterStartDate, filterEndDate, filterApp, pageNum} = req.query
+
+    // set filterCriteria object
+    let filterCriteria = {}
+    filterCirteria = !isEmpty(filterCountry) ? filterCriteria.country = { $in: filterCountry.split(',') } : filterCriteria
+    filterCirteria = !isEmpty(filterAdTypes) ? filterCriteria.adType = { $in: filterAdTypes.split(',') } : filterCriteria
+    filterCirteria = !isEmpty(filterApp) ? filterCriteria.appName = { $in: filterApp.split('|') } : filterCriteria
+    if (!isEmpty(filterStartDate) && !isEmpty(filterEndDate)) {
+        filterCriteria.date = {
+            $gte: Date.parse(filterStartDate),
+            $lte: Date.parse(filterEndDate)
+        }
+    } else if (!isEmpty(filterEndDate)) {
+        filterCriteria.date = { $lte: Date.parse(filterEndDate) }
+    } else if (!isEmpty(filterStartDate)) {
+        filterCriteria.date = { $gte: Date.parse(filterStartDate) }
+    }
+
+    if(isEmpty(byApp) && isEmpty(byDate) && isEmpty(byUser)){
+        reportModel.find(filterCriteria).sort({'date':-1}).skip((parseInt(pageNum)-1)*100).limit(100)
+        .then(reports => {
+            return res.status(200).json({
+                reports: reports,
+                filterCriteria: filterCriteria
+            })
+        }).catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.',
+                filterCriteria: filterCriteria
+            })
+        })
+    } else {
+        // set groupBy object
+        let aggregateObj = {}
+        if(!isEmpty(byApp)){
+            aggregateObj = {$group : {
+                _id: "$appName", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, clicks: { $sum: "$clicks" }, adCTR: { $avg: "$adCTR" },
+                cpc: { $sum: "$cpc" }, lift: { $avg: "$lift"}, revenue: { $sum: "$estRevenue"}, adImpressions: { $sum: "$adImpressions"}, adeCPM: { $sum: "$adeCPM" }
+            }}
+        } else if(!isEmpty(byDate)){
+            aggregateObj = {$group : {
+                _id: "$date", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, clicks: { $sum: "$clicks" }, adCTR: { $avg: "$adCTR" },
+                cpc: { $sum: "$cpc" }, lift: { $avg: "$lift"}, revenue: { $sum: "$estRevenue"}, adImpressions: { $sum: "$adImpressions"}, adeCPM: { $sum: "$adeCPM" }
+            }}
+        } else if(!isEmpty(byUser)){
+            aggregateObj = {$group : {
+                _id: "$clientEmail", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, clicks: { $sum: "$clicks" }, adCTR: { $avg: "$adCTR" },
+                cpc: { $sum: "$cpc" }, lift: { $avg: "$lift"}, revenue: { $sum: "$estRevenue"}, adImpressions: { $sum: "$adImpressions"}, adeCPM: { $sum: "$adeCPM" }
+            }}
+        }
+    
+        reportModel.aggregate([
+            {$match: filterCriteria},
+            aggregateObj
+        ]).sort({'date':-1}).skip((parseInt(pageNum)-1)*100).limit(100)
+        .then(reports => {
+            return res.status(200).json({
+                reports: reports,
+                filterCriteria: filterCriteria,
+            })
+        }).catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.',
+                err: err,
+                filterCriteria: filterCriteria
+            })
+        })
+    }
+
+})
+
 router.get('/getReportTypesDropdown', verifyAdminTokenMiddleware, async (req, res) => {
     const types = await reportModel.aggregate([
         { $group: { _id: '$adType' } },
