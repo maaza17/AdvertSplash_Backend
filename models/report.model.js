@@ -79,6 +79,10 @@ const reportSchema = new mongoose.Schema({
     country: {
         type: String,
         required: true
+    },
+    clientEmail: {
+        type: String,
+        required: true
     }
 })
 

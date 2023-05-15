@@ -33,6 +33,24 @@ router.post('/addApplication', verifyAdminTokenMiddleware, (req, res) => {
         })
 })
 
+router.post('/deleteApplication', verifyAdminTokenMiddleware, (req, res) => {
+    let { appName, appComID, clientEmail } = req.body
+    appModel.deleteOne({ appName: appName, appComID: appComID, clientEmail: clientEmail, }).then(deletedApp => {
+        if (deletedApp.deletedCount <= 0) {
+            return res.status(400).json({
+                message: 'App not found. Please refresh and try again.'
+            })
+        } else return res.status(200).json({
+            message: 'App deleted successfully.'
+        })
+    }).catch(err => {
+        res.status(500).json({
+            message: 'An unexpected error occurred. Please try again later.',
+            error: err
+        })
+    })
+})
+
 // router.get('/getAllAppsAggregated', verifyAdminTokenMiddleware, (req, res) => {
 //     // remember to agregate and sum the count of ad unit IDs here and return in the response
 

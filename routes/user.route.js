@@ -187,7 +187,7 @@ router.post('/verifyEmail', (req, res) => {
                 doc.save((err, savedDoc) => {
                     if (savedDoc) {
                         return res.status(200).json({
-                            message: 'User registered successfully.',
+                            message: 'Email verified successfully.',
                             number: 5000
                         })
                     } else {
