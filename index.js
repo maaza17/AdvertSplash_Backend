@@ -23,6 +23,7 @@ app.use(cookieParser({ sameSite: 'none' }))
 
 
 app.use(function (req, res, next) {
+  res.header('Access-Control-Allow-Origin', (process.env.PORT) ? process.env.FRONTEND_URL : "*");
   res.setHeader(
     'Access-Control-Allow-Methods',
     'GET, POST, OPTIONS, PUT, PATCH, DELETE'
@@ -47,7 +48,6 @@ mongoose
   )
   .then(() => console.log('Database connected successfully'))
   .catch((err) => console.log(err));
-
 
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url} ${Date().toString()}`)
