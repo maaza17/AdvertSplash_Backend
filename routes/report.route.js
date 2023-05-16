@@ -235,7 +235,9 @@ router.get('/getReportDropdownUser', verifyUserTokenMiddleware, async (req, res)
 
 })
 
-// GET aggregated clicks last 30 days
+// ---------------------------------------------------------------DASHBOARD APIS FOR ADMIN---------------------------------------------------------------
+
+// GET aggregated clicks last 30 days admin
 router.get('/aggregatedClicks', verifyAdminTokenMiddleware, async (req, res) => {
     let tempDate = Date.now() - 2592000
     reportModel.aggregate([
@@ -244,7 +246,7 @@ router.get('/aggregatedClicks', verifyAdminTokenMiddleware, async (req, res) => 
     ])
         .then(data => {
             return res.status(200).json({
-                clicks: data
+                clicks: (!isEmpty(data))?data[0].clicks:0
             })
         })
         .catch(err => {
@@ -254,7 +256,7 @@ router.get('/aggregatedClicks', verifyAdminTokenMiddleware, async (req, res) => 
         })
 })
 
-// GET aggregated views last 30 days
+// GET aggregated views last 30 days admin
 router.get('/aggregatedViews', verifyAdminTokenMiddleware, async (req, res) => {
     let tempDate = Date.now() - 2592000
     reportModel.aggregate([
@@ -263,17 +265,17 @@ router.get('/aggregatedViews', verifyAdminTokenMiddleware, async (req, res) => {
     ])
         .then(data => {
             return res.status(200).json({
-                views: data
+                views: (!isEmpty(data))?data[0].views:0
             })
         })
         .catch(err => {
             return res.status(500).json({
-                message: 'An unexpected error occurred. Please try again later.'
+                message: 'An unexpected error occurred. Please try again later.',
             })
         })
 })
 
-// Get aggregated CTR last 30 days
+// Get aggregated CTR last 30 days admin
 router.get('/aggregatedCTR', verifyAdminTokenMiddleware, async (req, res) => {
     let tempDate = Date.now() - 2592000
     reportModel.aggregate([
@@ -282,7 +284,7 @@ router.get('/aggregatedCTR', verifyAdminTokenMiddleware, async (req, res) => {
     ])
         .then(data => {
             return res.status(200).json({
-                adCTR: data
+                adCTR: (!isEmpty(data))?data[0].adCTR:0
             })
         })
         .catch(err => {
@@ -292,7 +294,7 @@ router.get('/aggregatedCTR', verifyAdminTokenMiddleware, async (req, res) => {
         })
 })
 
-// GET aggregated revenue last 30 days
+// GET aggregated revenue last 30 days admin
 router.get('/aggregatedRevenue', verifyAdminTokenMiddleware, async (req, res) => {
     let tempDate = Date.now() - 2592000
     reportModel.aggregate([
@@ -301,7 +303,7 @@ router.get('/aggregatedRevenue', verifyAdminTokenMiddleware, async (req, res) =>
     ])
         .then(data => {
             return res.status(200).json({
-                clicks: data
+                clicks: (!isEmpty(data))?data[0].revenue:0
             })
         })
         .catch(err => {
@@ -311,9 +313,105 @@ router.get('/aggregatedRevenue', verifyAdminTokenMiddleware, async (req, res) =>
         })
 })
 
-// GET dashboard stats for graph- views, clicks, revenue, CTR across all time for graph
+// GET dashboard stats for graph- views, clicks, revenue, CTR across all time for graph admin
 router.get('/dashboardStats', verifyAdminTokenMiddleware, async (req, res) => {
     reportModel.aggregate([
+        { $group: { _id: { year: { $year: "$date" }, month: { $month: "$date" } }, clicks: { $sum: "$clicks" }, views: { $sum: "$adImpressions" }, adCTR: { $avg: "$adCTR" }, revenue: { $sum: "$estRevenue" } } }
+    ])
+        .then(data => {
+            return res.status(200).json({
+                data: data
+            })
+        })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.'
+            })
+        })
+})
+
+// ---------------------------------------------------------------DASHBOARD APIS FOR USER---------------------------------------------------------------
+
+// GET aggregated clicks last 30 days user
+router.post('/aggregatedClicksUser', verifyUserTokenMiddleware, async (req, res) => {
+    let tempDate = Date.now() - 2592000
+    reportModel.aggregate([
+        { $match: { date: { $gte: { tempDate } }, clientEmail: req.body.decodedUser.email } },
+        { $group: { _id: null, clicks: { $sum: "$clicks" } } }
+    ])
+        .then(data => {
+            return res.status(200).json({
+                clicks: (!isEmpty(data))?data[0].clicks:0
+            })
+        })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.'
+            })
+        })
+})
+
+// GET aggregated views last 30 days user
+router.post('/aggregatedViewsUser', verifyUserTokenMiddleware, async (req, res) => {
+    let tempDate = Date.now() - 2592000
+    reportModel.aggregate([
+        { $match: { date: { $gte: { tempDate } }, clientEmail: req.body.decodedUser.email } },
+        { $group: { _id: null, views: { $sum: "$adImpressions" } } }
+    ])
+        .then(data => {
+            return res.status(200).json({
+                views: (!isEmpty(data))?data[0].views:0
+            })
+        })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.',
+            })
+        })
+})
+
+// Get aggregated CTR last 30 days user
+router.post('/aggregatedCTRUser', verifyUserTokenMiddleware, async (req, res) => {
+    let tempDate = Date.now() - 2592000
+    reportModel.aggregate([
+        { $match: { date: { $gte: { tempDate } }, clientEmail: req.body.decodedUser.email } },
+        { $group: { _id: null, adCTR: { $avg: "$adCTR" } } }
+    ])
+        .then(data => {
+            return res.status(200).json({
+                adCTR: (!isEmpty(data))?data[0].adCTR:0
+            })
+        })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.'
+            })
+        })
+})
+
+// GET aggregated revenue last 30 days user
+router.post('/aggregatedRevenueUser', verifyUserTokenMiddleware, async (req, res) => {
+    let tempDate = Date.now() - 2592000
+    reportModel.aggregate([
+        { $match: { date: { $gte: { tempDate } }, clientEmail: req.body.decodedUser.email } },
+        { $group: { _id: null, revenue: { $sum: "$estRevenue" } } }
+    ])
+        .then(data => {
+            return res.status(200).json({
+                clicks: (!isEmpty(data))?data[0].revenue:0
+            })
+        })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.'
+            })
+        })
+})
+
+// GET dashboard stats for graph- views, clicks, revenue, CTR across all time for graph user
+router.post('/dashboardStatsUser', verifyUserTokenMiddleware, async (req, res) => {
+    reportModel.aggregate([
+        { $match: { clientEmail: req.body.decodedUser.email } },
         { $group: { _id: { year: { $year: "$date" }, month: { $month: "$date" } }, clicks: { $sum: "$clicks" }, views: { $sum: "$adImpressions" }, adCTR: { $avg: "$adCTR" }, revenue: { $sum: "$estRevenue" } } }
     ])
         .then(data => {
