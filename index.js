@@ -13,22 +13,20 @@ const userRoute = require('./routes/user.route')
 const app = express();
 
 var cors = require('cors');
-// app.use(cors({ credentials: true, origin: process.env.FRONTEND_URL }));
-app.use(cors({ credentials: true, origin: true }));
+app.use(cors({ credentials: true, origin: (process.env.PORT) ? process.env.FRONTEND_URL : '*' }));
 
 app.use(bodyParser.json({ limit: 20000000 }));
-app.use(cookieParser({sameSite: 'none'}))
-
+app.use(cookieParser({ sameSite: 'none' }))
 
 app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', (process.env.PORT) ? process.env.FRONTEND_URL : '*');
   res.setHeader(
     'Access-Control-Allow-Methods',
     'GET, POST, OPTIONS, PUT, PATCH, DELETE'
   );
   res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept'
   );
   next();
 });
