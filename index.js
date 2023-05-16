@@ -13,10 +13,10 @@ const userRoute = require('./routes/user.route')
 const app = express();
 
 var cors = require('cors');
-app.use(cors({ credentials: true, origin: (process.env.PORT) ? process.env.FRONTEND_URL : 'http://localhost:3000' }));
+app.use(cors({ credentials: true, origin: (process.env.NODE_ENV === 'production') ? process.env.FRONTEND_URL : 'http://localhost:3000' }));
 
 app.use(bodyParser.json({ limit: 20000000 }));
-app.use(cookieParser({ sameSite: (process.env.PORT) ? process.env.FRONTEND_URL : 'http://localhost:3000' }))
+app.use(cookieParser({ sameSite: (process.env.NODE_ENV === 'production') ? process.env.FRONTEND_URL : 'http://localhost:3000' }))
 
 app.use(function (req, res, next) {
   // res.header('Access-Control-Allow-Origin', (process.env.PORT) ? process.env.FRONTEND_URL : '*');
