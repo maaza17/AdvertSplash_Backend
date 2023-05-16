@@ -3,7 +3,9 @@ const userModel = require('../models/user.model');
 const { genConfCode, verifyUserTokenMiddleware, verifyAdminTokenMiddleware } = require('../helpers/auth.helper')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const { sendAccountVerificationEmail } = require('../helpers/aws-ses.helper')
+const { sendAccountVerificationEmail } = require('../helpers/aws-ses.helper');
+const reportModel = require('../models/report.model');
+const appModel = require('../models/app.model');
 
 
 // router.get('/haris', (req, res) => {
@@ -138,9 +140,20 @@ router.post('/getAll', verifyAdminTokenMiddleware, async (req, res) => {
                 })
             }
 
-            return res.status(200).json({
-                message: 'Users found.',
-                data: users
+            appModel.aggregate([
+                {$group: {_id: "$clientEmail", appArr: {$addToSet: '$appComID'}}}
+            ]).then(apps => {
+                data = users.map(user => {
+                    let userApps = apps.filter(app => app._id == user.email)[0]
+                    let temp = user._doc
+                    temp.appCount = (apps.filter(app => app._id == user.email)[0]) ? apps.filter(app => app._id == user.email)[0].appArr.length : 0
+                    return temp
+                })
+
+                return res.status(200).json({
+                    message: 'Users found.',
+                    data: data
+                })
             })
         })
         .catch(err => {
