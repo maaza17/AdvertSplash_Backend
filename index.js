@@ -47,6 +47,7 @@ mongoose
   .then(() => console.log('Database connected successfully'))
   .catch((err) => console.log(err));
 
+
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url} ${Date().toString()}`)
   next()
