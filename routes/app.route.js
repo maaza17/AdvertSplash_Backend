@@ -97,6 +97,20 @@ router.get('/getAllApps', verifyAdminTokenMiddleware, (req, res) => {
     })
 })
 
+
+router.post('/getAllAppsUser', verifyUserTokenMiddleware, (req, res) => {
+    appModel.find({ clientEmail: req.body.decodedUser.email }).then(reports => {
+        res.status(200).json({
+            data: reports
+        })
+    }).catch(err => {
+        res.status(500).json({
+            message: err.message,
+            error: err
+        })
+    })
+})
+
 // // router.post('/getAppsByUser_admin', verifyAdminTokenMiddleware, (req, res) => {
 // //     let { clientEmail } = req.body
 // //     appModel.find({ clientEmail: clientEmail })
