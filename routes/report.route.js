@@ -47,14 +47,14 @@ router.post('/reportsUser', verifyUserTokenMiddleware, async (req, res) => {
             aggregateObj = {
                 $group: {
                     _id: "$appName", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, clicks: { $sum: "$clicks" }, adCTR: { $avg: "$adCTR" },
-                    cpc: { $sum: "$cpc" }, lift: { $avg: "$lift" }, revenue: { $sum: "$estRevenue" }, adImpressions: { $sum: "$adImpressions" }, adeCPM: { $sum: "$adeCPM" }
+                    cpc: { $sum: "$cpc" }, lift: { $avg: "$lift" }, revenue: { $sum: "$clientRevenue" }, adImpressions: { $sum: "$adImpressions" }, adeCPM: { $sum: "$adeCPM" }
                 }
             }
         } else if (!isEmpty(byDate)) {
             aggregateObj = {
                 $group: {
                     _id: "$date", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, clicks: { $sum: "$clicks" }, adCTR: { $avg: "$adCTR" },
-                    cpc: { $sum: "$cpc" }, lift: { $avg: "$lift" }, revenue: { $sum: "$estRevenue" }, adImpressions: { $sum: "$adImpressions" }, adeCPM: { $sum: "$adeCPM" }
+                    cpc: { $sum: "$cpc" }, lift: { $avg: "$lift" }, revenue: { $sum: "$clientRevenue" }, adImpressions: { $sum: "$adImpressions" }, adeCPM: { $sum: "$adeCPM" }
                 }
             }
         }
@@ -123,21 +123,21 @@ router.get('/reportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
             aggregateObj = {
                 $group: {
                     _id: "$appName", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, clicks: { $sum: "$clicks" }, adCTR: { $avg: "$adCTR" },
-                    cpc: { $sum: "$cpc" }, lift: { $avg: "$lift" }, revenue: { $sum: "$estRevenue" }, adImpressions: { $sum: "$adImpressions" }, adeCPM: { $sum: "$adeCPM" }
+                    cpc: { $sum: "$cpc" }, lift: { $avg: "$lift" }, totalRevenue: {$sum: "$estRevenue"}, commission: {$sum: "$commission"}, clientRevenue: {$sum: "$clientRevenue"}, adImpressions: { $sum: "$adImpressions" }, adeCPM: { $sum: "$adeCPM" }
                 }
             }
         } else if (!isEmpty(byDate)) {
             aggregateObj = {
                 $group: {
                     _id: "$date", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, clicks: { $sum: "$clicks" }, adCTR: { $avg: "$adCTR" },
-                    cpc: { $sum: "$cpc" }, lift: { $avg: "$lift" }, revenue: { $sum: "$estRevenue" }, adImpressions: { $sum: "$adImpressions" }, adeCPM: { $sum: "$adeCPM" }
+                    cpc: { $sum: "$cpc" }, lift: { $avg: "$lift" }, totalRevenue: {$sum: "$estRevenue"}, commission: {$sum: "$commission"}, clientRevenue: {$sum: "$clientRevenue"}, adImpressions: { $sum: "$adImpressions" }, adeCPM: { $sum: "$adeCPM" }
                 }
             }
         } else if (!isEmpty(byUser)) {
             aggregateObj = {
                 $group: {
                     _id: "$clientEmail", adCount: { $addToSet: '$dfpAdUnit' }, exchangeRequests: { $sum: "$exchangeRequests" }, clicks: { $sum: "$clicks" }, adCTR: { $avg: "$adCTR" },
-                    cpc: { $sum: "$cpc" }, lift: { $avg: "$lift" }, revenue: { $sum: "$estRevenue" }, adImpressions: { $sum: "$adImpressions" }, adeCPM: { $sum: "$adeCPM" }
+                    cpc: { $sum: "$cpc" }, lift: { $avg: "$lift" }, totalRevenue: {$sum: "$estRevenue"}, commission: {$sum: "$commission"}, clientRevenue: {$sum: "$clientRevenue"}, adImpressions: { $sum: "$adImpressions" }, adeCPM: { $sum: "$adeCPM" }
                 }
             }
         }
@@ -313,10 +313,48 @@ router.get('/aggregatedRevenue', verifyAdminTokenMiddleware, async (req, res) =>
         })
 })
 
+// GET aggregated commission last 30 days admin
+router.get('/aggregatedCommission', verifyAdminTokenMiddleware, async (req, res) => {
+    let tempDate = Date.now() - 2592000
+    reportModel.aggregate([
+        { $match: { date: { $gte: { tempDate } } } },
+        { $group: { _id: null, commission: { $sum: "$commission" } } }
+    ])
+        .then(data => {
+            return res.status(200).json({
+                commission: (!isEmpty(data))?data[0].commission:0
+            })
+        })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.'
+            })
+        })
+})
+
+// GET aggregated clientRevenue last 30 days admin
+router.get('/aggregatedClientRevenue', verifyAdminTokenMiddleware, async (req, res) => {
+    let tempDate = Date.now() - 2592000
+    reportModel.aggregate([
+        { $match: { date: { $gte: { tempDate } } } },
+        { $group: { _id: null, clientRevenue: { $sum: "$clientRevenue" } } }
+    ])
+        .then(data => {
+            return res.status(200).json({
+                clientRevenue: (!isEmpty(data))?data[0].clientRevenue:0
+            })
+        })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.'
+            })
+        })
+})
+
 // GET dashboard stats for graph- views, clicks, revenue, CTR across all time for graph admin
 router.get('/dashboardStats', verifyAdminTokenMiddleware, async (req, res) => {
     reportModel.aggregate([
-        { $group: { _id: { year: { $year: "$date" }, month: { $month: "$date" } }, clicks: { $sum: "$clicks" }, views: { $sum: "$adImpressions" }, adCTR: { $avg: "$adCTR" }, revenue: { $sum: "$estRevenue" } } }
+        { $group: { _id: { year: { $year: "$date" }, month: { $month: "$date" } }, clicks: { $sum: "$clicks" }, views: { $sum: "$adImpressions" }, adCTR: { $avg: "$adCTR" }, revenue: { $sum: "$estRevenue" }, commission: { $sum: "$commission" }, clientRevenue: { $sum: "$clientRevenue" }} }
     ])
         .then(data => {
             return res.status(200).json({
@@ -394,7 +432,7 @@ router.post('/aggregatedRevenueUser', verifyUserTokenMiddleware, async (req, res
     let tempDate = Date.now() - 2592000
     reportModel.aggregate([
         { $match: { date: { $gte: { tempDate } }, clientEmail: req.body.decodedUser.email } },
-        { $group: { _id: null, revenue: { $sum: "$estRevenue" } } }
+        { $group: { _id: null, revenue: { $sum: "$clientRevenue" } } }
     ])
         .then(data => {
             return res.status(200).json({
@@ -412,7 +450,7 @@ router.post('/aggregatedRevenueUser', verifyUserTokenMiddleware, async (req, res
 router.post('/dashboardStatsUser', verifyUserTokenMiddleware, async (req, res) => {
     reportModel.aggregate([
         { $match: { clientEmail: req.body.decodedUser.email } },
-        { $group: { _id: { year: { $year: "$date" }, month: { $month: "$date" } }, clicks: { $sum: "$clicks" }, views: { $sum: "$adImpressions" }, adCTR: { $avg: "$adCTR" }, revenue: { $sum: "$estRevenue" } } }
+        { $group: { _id: { year: { $year: "$date" }, month: { $month: "$date" } }, clicks: { $sum: "$clicks" }, views: { $sum: "$adImpressions" }, adCTR: { $avg: "$adCTR" }, revenue: { $sum: "$clientRevenue" } } }
     ])
         .then(data => {
             return res.status(200).json({
