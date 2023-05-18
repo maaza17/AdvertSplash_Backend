@@ -28,7 +28,7 @@ router.post('/reportsUser', verifyUserTokenMiddleware, async (req, res) => {
     }
 
     if (isEmpty(byApp) && isEmpty(byDate)) {
-        reportModel.find(filterCriteria).sort({ 'date': -1 }).skip((parseInt(pageNum) - 1) * 100).limit(100)
+        reportModel.find(filterCriteria).sort({ 'date': -1 }).skip((parseInt(pageNum) - 1) * 50).limit(50)
             .then(reports => {
                 return res.status(200).json({
                     reports: reports,
@@ -62,7 +62,7 @@ router.post('/reportsUser', verifyUserTokenMiddleware, async (req, res) => {
         reportModel.aggregate([
             { $match: filterCriteria },
             aggregateObj
-        ]).sort({ 'date': -1 }).skip((parseInt(pageNum) - 1) * 100).limit(100)
+        ]).sort({ 'date': -1 }).skip((parseInt(pageNum) - 1) * 50).limit(50)
             .then(reports => {
                 return res.status(200).json({
                     reports: reports,
@@ -104,7 +104,7 @@ router.get('/reportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
     }
 
     if (isEmpty(byApp) && isEmpty(byDate) && isEmpty(byUser)) {
-        reportModel.find(filterCriteria).sort({ 'date': -1 }).skip((parseInt(pageNum) - 1) * 100).limit(100)
+        reportModel.find(filterCriteria).sort({ 'date': -1 }).skip((parseInt(pageNum) - 1) * 50).limit(50)
             .then(reports => {
                 return res.status(200).json({
                     reports: reports,
@@ -145,7 +145,7 @@ router.get('/reportsAdmin', verifyAdminTokenMiddleware, async (req, res) => {
         reportModel.aggregate([
             { $match: filterCriteria },
             aggregateObj
-        ]).sort({ 'date': -1 }).skip((parseInt(pageNum) - 1) * 100).limit(100)
+        ]).sort({ 'date': -1 }).skip((parseInt(pageNum) - 1) * 50).limit(50)
             .then(reports => {
                 return res.status(200).json({
                     reports: reports,
