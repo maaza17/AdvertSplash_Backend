@@ -130,7 +130,7 @@ router.post('/resetPassword', verifyAdminTokenMiddleware, async (req, res) => {
                     // if (newPassOne === newPassTwo) {
                     bcrypt.hash(newPass, 10)
                         .then(newHash => {
-                            adminModel.updateOne({ email: "admin@advertsplash.com" }, { password: newHash, confCode: genConfCode() })
+                            adminModel.updateOne({ email: "admin@advertsplash.com" }, { password: newHash })
                                 .then(updated => {
                                     if (updated.matchedCount <= 0 || updated.modifiedCount <= 0) {
                                         return res.status(500).json({
