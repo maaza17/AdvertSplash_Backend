@@ -7,15 +7,6 @@ const { sendAccountVerificationEmail } = require('../helpers/aws-ses.helper');
 const reportModel = require('../models/report.model');
 const appModel = require('../models/app.model');
 
-
-// router.get('/haris', (req, res) => {
-//     userModel.deleteMany({ email: "gogeto931@gmail.com" }, (err, countDocuments) => {
-//         return res.status(200).json({
-//             message: countDocuments
-//         })
-//     })
-// })
-
 // register user
 router.post('/register', async (req, res) => {
     let { fullname, email, phoneNum, password } = req.body

@@ -112,6 +112,50 @@ router.post('/logout', async (req, res) => {
 // request forgot password
 
 // reset password
+// reset password self
+router.post('/resetPassword', verifyAdminTokenMiddleware, async (req, res) => {
+    let { oldPass, newPass } = req.body
+    adminModel.findOne({ email: "admin@advertsplash.com" })
+        .then(Admin => {
+            bcrypt.compare(oldPass, Admin.password)
+                .then(isMatch => {
+                    if (!isMatch) {
+                        return res.status(403).clearCookie('auth_token_usr', { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
+                            message: 'Old password is incorrect. You will be logged out for security purposes.'
+                        })
+                    }
+                })
+                .then(() => {
+                    // if (newPassOne === newPassTwo) {
+                    bcrypt.hash(newPass, 10)
+                        .then(newHash => {
+                            adminModel.updateOne({ email: "admin@advertsplash.com" }, { password: newHash, confCode: genConfCode() })
+                                .then(updated => {
+                                    if (updated.matchedCount <= 0 || updated.modifiedCount <= 0) {
+                                        return res.status(500).json({
+                                            message: 'An unexpected error occurred. Please try again later.'
+                                        })
+                                    } else {
+                                        return res.status(200).clearCookie('auth_token_usr', { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
+                                            message: 'Password reset successfully. Please sign-in again with your updated credentials.'
+                                        })
+                                    }
+                                })
+                        })
+                    // } else {
+                    //     return res.status(400).json({
+                    //         message: 'New passwords do not match.'
+                    //     })
+                    // }
+                })
+        })
+        .catch(err => {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.'
+            })
+        })
+})
+
 
 // check admin session
 router.get('/checkAdminSession', verifyAdminTokenMiddleware, async (req, res) => {
