@@ -120,8 +120,9 @@ router.post('/resetPassword', verifyAdminTokenMiddleware, async (req, res) => {
             bcrypt.compare(oldPass, Admin.password)
                 .then(isMatch => {
                     if (!isMatch) {
-                        return res.status(403).clearCookie('auth_token_usr', { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
-                            message: 'Old password is incorrect. You will be logged out for security purposes.'
+                        return res.status(200).json({
+                            error: true,
+                            message: 'Old password is incorrect. Please try again'
                         })
                     }
                 })
@@ -136,8 +137,8 @@ router.post('/resetPassword', verifyAdminTokenMiddleware, async (req, res) => {
                                             message: 'An unexpected error occurred. Please try again later.'
                                         })
                                     } else {
-                                        return res.status(200).clearCookie('auth_token_usr', { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
-                                            message: 'Password reset successfully. Please sign-in again with your updated credentials.'
+                                        return res.status(200).json({
+                                            message: 'Password reset successfully.'
                                         })
                                     }
                                 })
