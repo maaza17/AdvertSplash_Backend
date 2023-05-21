@@ -2,6 +2,7 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { verifyAdminTokenMiddleware } = require('../helpers/auth.helper');
+const {sendForgotPasswordEmailAdmin} = require('../helpers/email.helper');
 const adminModel = require('../models/admin.model');
 
 // register admin
@@ -83,35 +84,74 @@ router.post('/login', async (req, res) => {
 
 // logout admin
 router.post('/logout', async (req, res) => {
-    // console.log("res")
-    // console.log(res)
-    // console.log("res cookie")
-    // console.log(res.cookie)
-    // res.cookie('auth_token_adm', 'none', {
-    //     httpOnly: true,
-    //     secure: process.env.NODE_ENV == 'production',
-    //     sameSite: "none"
-    // })
-    // req?.session?.cookie?.expires = true;
-    // req?.session?.cookie?.maxAge = 1;
-    // for(var x = 0 ; x<1000 ; x++){
-    //     //do nothing
-    // }
-
-    // return res.status(200).cookie('auth_token_adm', "null", { maxAge: 0, expires: 1, httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
-    //     message: "Logout successful! 6",
-    // })
 
     return res.status(200).clearCookie('auth_token_adm', { httpOnly: true, secure: process.env.NODE_ENV == 'production', sameSite: "none" }).json({
         message: 'Logout successful!'
     })
 })
 
-// request reset password
-
 // request forgot password
+router.post('/forgotPassword', async (req, res) => {
+    let { email } = req.body
+    adminModel.findOne({ email: email })
+    .then(admin => {
+        if (!admin) {
+            return res.status(404).json({
+                message: 'Admin not found'
+            })
+        } else {
+            let isSuccessful = sendForgotPasswordEmailAdmin(admin)
+            if (isSuccessful) {
+                return res.status(200).json({
+                    message: 'An email has been sent to your email address. Please follow the link to reset your password.'
+                })
+            } else {
+                return res.status(500).json({
+                    message: 'An unexpected error occurred. Please try again later.'
+                })
+            }
+        }
+    })
+    .catch(err => {
+        return res.status(500).json({
+            message: 'An unexpected error occurred. Please try again later.'
+        })
+    })
+})
 
-// reset password
+// reset forgotten password
+router.post('/resetPassword_forgot/:tempToken', async (req, res) => {
+    let { newPassOne, newPassTwo } = req.body
+    let tempToken = req.params.tempToken
+
+    if (newPassOne != newPassTwo) {
+        return res.status(400).json({
+            message: 'New passwords do not match.'
+        })
+    }
+
+    try {
+        let decoded = await jwt.verify(tempToken, process.env.ENCRYPTION_SECRET_ADMIN)
+        let newPassFinal = await bcrypt.hash(newPassOne, 10)
+        await adminModel.updateOne({ email: decoded.email }, { password: newPassFinal })
+        .then(updated => {
+            if(updated.atchedCount <= 0 || updated.modifiedCount <= 0) {
+                return res.status(500).json({
+                    message: 'An unexpected error occurred. Please try again later.'
+                })
+            } else {
+                return res.status(200).json({
+                    message: 'Password successfully reset.'
+                })
+            }
+        })
+    } catch (err) {
+        return res.status(500).json({
+            message: 'An unexpected error occurred. Please try again later.'
+        })
+    }
+})
+
 // reset password self
 router.post('/resetPassword', verifyAdminTokenMiddleware, async (req, res) => {
     let { oldPass, newPass } = req.body

@@ -3,7 +3,7 @@ const userModel = require('../models/user.model');
 const { genConfCode, verifyUserTokenMiddleware, verifyAdminTokenMiddleware } = require('../helpers/auth.helper')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const { sendAccountVerificationEmail } = require('../helpers/aws-ses.helper');
+const { sendAccountVerificationEmail, sendForgotPasswordEmailUser } = require('../helpers/email.helper');
 const reportModel = require('../models/report.model');
 const appModel = require('../models/app.model');
 
@@ -217,56 +217,62 @@ router.post('/verifyEmail', (req, res) => {
 })
 
 // request forgot password
-router.post('/requestForgotPassword', async (req, res) => {
-    let newConfCode = genConfCode()
-    userModel.updateOne({ email: req.body.email }, { confCode: newConfCode })
-        .then(updated => {
-            if (updated.matchedCount <= 0 || updated.modifiedCount <= 0) {
-                return res.status(400).json({
-                    message: 'User requesting password reset not found.'
-                })
-            } else {
-                jwt.sign({ confCode: newConfCode }, process.env.ENCRYPTION_SECRET_USER, { expiresIn: 600 }, (signErr, tempToken) => {
-                    if (signErr) {
-                        return res.status(500).json({
-                            message: 'An unexpected occurred. Please try again later!'
-                        })
-                    } else {
-                        return res.status(200).json({
-                            message: 'Configure email alert here to send link with tempToken as url parameter.',
-                            tempToken: tempToken
-                        })
-                    }
-                })
-            }
-        })
-        .catch(err => {
-            return res.status(500).json({
-                message: 'An unexpected occurred. Please try again later!'
+router.post('/forgotPassword', async (req, res) => {
+    let {email} = req.body
+    try{
+        let user = await userModel.findOne({email: email})
+        if(!user) {
+            return res.status(404).json({
+                message: 'User with this email not found.'
             })
+        }
+
+        let isSuccessful = sendForgotPasswordEmailUser({email: user.email, fullname: user.fullname, confCode: user.confCode})
+        console.log(isSuccessful)
+        if(isSuccessful) {
+            return res.status(200).json({
+                message: 'An email has been sent to your email address. Please follow the link to reset your password.'
+            })
+        } else {
+            return res.status(500).json({
+                message: 'An unexpected error occurred. Please try again later.'
+            })
+        }
+
+    } catch (err) {
+        // console.log(err)
+        return res.status(500).json({
+            message: 'An unexpected error occurred. Please try again later.'
         })
+    }
 })
 
 // reset forgotten password
-router.post('/resetForgottenPassword/:tempToken', async (req, res) => {
-    try {
-        let tempDecoded = jwt.verify(req.params.tempToken, process.env.ENCRYPTION_SECRET_USER)
+router.post('/resetPassword_forgot/:tempToken', async (req, res) => {
+    let { newPassOne, newPassTwo } = req.body
+    let tempToken = req.params.tempToken
 
-        bcrypt.hash(req.body.newPassword, 10)
-            .then(newHash => {
-                userModel.updateOne({ confCode: tempDecoded.confCode }, { confCode: genConfCode(), password: newHash })
-                    .then(updated => {
-                        if (updated.matchedCount <= 0 || updated.modifiedCount <= 0) {
-                            return res.status(500).json({
-                                message: 'An unexpected error occurred. Please try again later.'
-                            })
-                        } else {
-                            return res.status(200).json({
-                                message: 'Password reset successfully.'
-                            })
-                        }
-                    })
-            })
+    if (newPassOne != newPassTwo) {
+        return res.status(400).json({
+            message: 'New passwords do not match.'
+        })
+    }
+
+    try {
+        let decoded = await jwt.verify(tempToken, process.env.ENCRYPTION_SECRET_USER)
+        let newPassFinal = await bcrypt.hash(newPassOne, 10)
+        await userModel.updateOne({ confCode: decoded.confCode }, { password: newPassFinal, confCode: genConfCode() })
+        .then(updated => {
+            if(updated.atchedCount <= 0 || updated.modifiedCount <= 0) {
+                return res.status(500).json({
+                    message: 'An unexpected error occurred. Please try again later.'
+                })
+            } else {
+                return res.status(200).json({
+                    message: 'Password successfully reset.'
+                })
+            }
+        })
     } catch (err) {
         return res.status(500).json({
             message: 'An unexpected error occurred. Please try again later.'
