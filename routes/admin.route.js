@@ -135,7 +135,7 @@ router.post('/resetPassword_forgot/:tempToken', async (req, res) => {
         let newPassFinal = await bcrypt.hash(newPassOne, 10)
         await adminModel.updateOne({ email: decoded.email }, { password: newPassFinal })
         .then(updated => {
-            if(updated.atchedCount <= 0 || updated.modifiedCount <= 0) {
+            if(updated.attachedCount <= 0 || updated.modifiedCount <= 0) {
                 return res.status(500).json({
                     message: 'An unexpected error occurred. Please try again later.'
                 })

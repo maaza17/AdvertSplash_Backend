@@ -250,6 +250,7 @@ router.post('/forgotPassword', async (req, res) => {
 // reset forgotten password
 router.post('/resetPassword_forgot/:tempToken', async (req, res) => {
     let { newPassOne, newPassTwo } = req.body
+    console.log(req.body);
     let tempToken = req.params.tempToken
 
     if (newPassOne != newPassTwo) {
@@ -265,7 +266,7 @@ router.post('/resetPassword_forgot/:tempToken', async (req, res) => {
         .then(updated => {
             if(updated.atchedCount <= 0 || updated.modifiedCount <= 0) {
                 return res.status(500).json({
-                    message: 'An unexpected error occurred. Please try again later.'
+                    message: 'An unexpected error occurred. Please try again later1.'
                 })
             } else {
                 return res.status(200).json({
@@ -274,8 +275,9 @@ router.post('/resetPassword_forgot/:tempToken', async (req, res) => {
             }
         })
     } catch (err) {
+        console.log(err);
         return res.status(500).json({
-            message: 'An unexpected error occurred. Please try again later.'
+            message: 'An unexpected error occurred. Please try again later2.'
         })
     }
 })

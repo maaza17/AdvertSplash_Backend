@@ -20,7 +20,7 @@ const sendAccountVerificationEmail = async (user) => {
         from: '"AdvertSplash" <' + process.env.NODEMAILER_EMAIL + '>',
         to: user.email,
         subject: 'Email Verificaion - AdvertSplash',
-        html: '<h3>Hi '+user.fullname+'!</h3><br/><p>Thankyou for registering with AdvertSplash.</p><br/><p>Follow the link to verify your email address on our platform. Email verification helps us filter out spam and provide you with the best user experience.</p><br/><p><a href='+'https://ads.walzixdigitals.com/UserVerify?code='+user.confCode+'>Verify Account<a/></p><br/><p>Regards,<br/>Team AdvertSplash</p>'
+        html: '<h3>Hi ' + user.fullname + '!</h3><br/><p>Thankyou for registering with AdvertSplash.</p><br/><p>Follow the link to verify your email address on our platform. Email verification helps us filter out spam and provide you with the best user experience.</p><br/><p><a href=' + 'https://ads.walzixdigitals.com/UserVerify?code=' + user.confCode + '>Verify Account<a/></p><br/><p>Regards,<br/>Team AdvertSplash</p>'
     }
 
     await transport.sendMail(mailOptions, (err, info) => {
@@ -39,15 +39,15 @@ const sendForgotPasswordEmailAdmin = async (admin) => {
 
     await jwt.sign({ email: admin.email, fullname: admin.fullname }, process.env.ENCRYPTION_SECRET_ADMIN, { expiresIn: 600 }, async (signErr, tempToken) => {
 
-        if(signErr) {
+        if (signErr) {
             console.log(signErr)
             return false
         } else {
             let mailOptions = {
                 from: '"AdvertSplash" <' + process.env.NODEMAILER_EMAIL + '>',
-            to: admin.email,
-            subject: 'Reset Your Password - AdvertSplash',
-            html: `<h3>Hi ${admin.fullname}!</h3><br/><p>You recently requested to reset your password with us.</p><br/><p>Please Follow the link to reset your password on our platform. Note that this link is valid for 10 minutes only.</p><br/><p><a href=${process.env.FRONTEND_URL}/ResetAdminPassword?code=${tempToken}>ResetPassword<a/></p><br/><p>Regards,<br/>Team AdvertSplash</p>`
+                to: admin.email,
+                subject: 'Reset Your Password - AdvertSplash',
+                html: `<h3>Hi ${admin.fullname}!</h3><br/><p>You recently requested to reset your password with us.</p><br/><p>Please Follow the link to reset your password on our platform. Note that this link is valid for 10 minutes only.</p><br/><p><a href=${process.env.FRONTEND_URL}/ResetPassword?code=${tempToken}&type=admin>ResetPassword<a/></p><br/><p>Regards,<br/>Team AdvertSplash</p>`
             }
             await transport.sendMail(mailOptions, (mailErr, mailInfo) => {
                 if (mailErr) {
@@ -69,15 +69,15 @@ const sendForgotPasswordEmailUser = async (user) => {
 
     await jwt.sign({ confCode: user.confCode }, process.env.ENCRYPTION_SECRET_USER, { expiresIn: 600 }, async (signErr, tempToken) => {
 
-        if(signErr) {
+        if (signErr) {
             console.log(signErr)
             return false
         } else {
             let mailOptions = {
                 from: '"AdvertSplash" <' + process.env.NODEMAILER_EMAIL + '>',
-            to: user.email,
-            subject: 'Reset Your Password - AdvertSplash',
-            html: `<h3>Hi ${user.fullname}!</h3><br/><p>You recently requested to reset your password with us.</p><br/><p>Please Follow the link to reset your password on our platform. Note that this link is valid for 10 minutes only.</p><br/><p><a href=${process.env.FRONTEND_URL}/ResetUserPassword?code=${tempToken}>ResetPassword<a/></p><br/><p>Regards,<br/>Team AdvertSplash</p>`
+                to: user.email,
+                subject: 'Reset Your Password - AdvertSplash',
+                html: `<h3>Hi ${user.fullname}!</h3><br/><p>You recently requested to reset your password with us.</p><br/><p>Please Follow the link to reset your password on our platform. Note that this link is valid for 10 minutes only.</p><br/><p><a href=${process.env.FRONTEND_URL}/ResetPassword?code=${tempToken}&type=user>ResetPassword<a/></p><br/><p>Regards,<br/>Team AdvertSplash</p>`
             }
             await transport.sendMail(mailOptions, (mailErr, mailInfo) => {
                 if (mailErr) {
